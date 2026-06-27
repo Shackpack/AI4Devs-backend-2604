@@ -222,3 +222,200 @@ El archivo mantiene su estructura consistente:
 Este registro demuestra que el sistema de logging está operativo y capturando cada solicitud del usuario de manera automática.
 
 ---
+
+## Registro: 2026-06-27T19:57:00+02:00
+
+**Prompt:**
+hazme un resumen del estado actual y como lo dejamos en la sesion anterior
+
+**Respuesta:**
+## Resumen del Estado Actual del Proyecto
+
+### 📁 Archivos de Documentación Creados
+
+1. **`PROJECT_OVERVIEW.md`** - Descripción completa del proyecto LTI
+2. **`PRODUCT_TICKETS.md`** - Especificación de tickets como Product Owner
+3. **`prompts/prompts-abb.md`** - Registro de todas las interacciones
+
+### 🔍 Descubrimientos de la Sesión Anterior
+
+**Endpoints actuales del backend:**
+- `POST /candidates` ✅ utilizado por frontend
+- `GET /candidates/:id` ❌ no utilizado
+- `POST /upload` ✅ utilizado por frontend
+- `GET /` ❌ solo de prueba
+
+**Conclusión**: Solo el 50% de los endpoints están siendo usados desde el frontend. La app actualmente solo permite crear candidatos, no consultarlos.
+
+### 🎫 Tickets Especificados
+
+**Ticket #001**: `GET /positions/:id/candidates`
+- Listar candidatos en proceso para una posición
+- Incluir: fullName, currentInterviewStep, averageScore
+
+**Ticket #002**: `PUT /candidates/:id/stage`
+- Actualizar fase del proceso de entrevista
+- Validar candidato, aplicación y flow correcto
+
+Ambos tickets están completamente documentados en `PRODUCT_TICKETS.md` con user stories, criterios de aceptación, ejemplos JSON, queries Prisma y tests requeridos.
+
+### 📋 Estado General
+- Proyecto inspeccionado y documentado
+- Sistema de logging de prompts funcionando
+- Tickets listos para desarrollo
+- Pendiente: implementar los endpoints y frontend correspondiente
+
+---
+
+## Registro: 2026-06-27T20:06:00+02:00
+
+**Prompt:**
+toma el rol de Senior backend typescript developer.
+
+Procede a implementar el ticket numero 1.
+
+No inventes nada. En caso de duda, preguntarme antes de continuar. Sigue los requisitos y logica especificasdos en el ticket
+
+**Respuesta:**
+He implementado el Ticket #001 como Senior Backend TypeScript Developer.
+
+## Archivos Creados/Modificados:
+
+### 1. `backend/src/application/services/positionService.ts`
+- Implementa `getCandidatesByPosition(positionId)`
+- Busca la posición y retorna 404 si no existe
+- Consulta todas las aplicaciones para esa posición
+- Calcula la puntuación media de entrevistas
+- Incluye metadata de entrevistas total/completadas
+- Ordena candidatos por `orderIndex` descendente
+
+### 2. `backend/src/presentation/controllers/positionController.ts`
+- Implementa `getCandidatesByPositionController`
+- Valida que `positionId` sea numérico (400 si no)
+- Maneja posición no encontrada (404)
+- Maneja errores internos (500)
+
+### 3. `backend/src/routes/positionRoutes.ts`
+- Define `GET /positions/:id/candidates`
+- Usa el controller implementado
+
+### 4. `backend/src/index.ts`
+- Registra `positionRoutes` bajo `/positions`
+
+### 5. `backend/src/tests/positionController.test.ts`
+- Tests unitarios para validación de ID numérico
+- Test para posición no encontrada (404)
+- Test para respuesta exitosa con candidatos
+- Test para posición sin aplicaciones (array vacío)
+- Test para errores internos (500)
+
+## Nota Importante:
+Los errores de lint mostrados en el IDE (`Cannot find module '@prisma/client'` y `Cannot find module 'express'`) se deben a que `node_modules` no está instalado en el backend. Para verificar la compilación y ejecutar tests, primero debes ejecutar:
+```bash
+cd backend
+npm install
+npx prisma generate
+```
+
+Luego podrás ejecutar:
+```bash
+npm run build
+npm test
+```
+
+---
+
+## Registro: 2026-06-27T20:11:00+02:00
+
+**Prompt:**
+he ejecutado los pasos solicitados, 4 tests fallaron
+
+**Respuesta:**
+Investigué los tests fallidos. El problema no estaba en la lógica del endpoint, sino en la configuración de Jest:
+
+## Causa de los Fallos:
+
+1. Los tests originales usaban `jest.mock` sin factory, lo que en algunos casos de TypeScript no crea automáticamente `jest.fn()` con métodos como `mockRejectedValue`.
+2. Tras ejecutar `npm run build`, Jest estaba ejecutando los tests tanto de `src/` como de `dist/`. La versión compilada en `dist/` tenía el código antiguo de los tests, causando 4 fallos adicionales.
+
+## Correcciones Aplicadas:
+
+### 1. `backend/src/tests/positionController.test.ts`
+- Reemplazado `jest.mock` por factory explícita:
+  ```typescript
+  jest.mock('../application/services/positionService', () => ({
+      getCandidatesByPosition: jest.fn(),
+  }));
+  ```
+- Agregado `jest.clearAllMocks()` en `beforeEach`
+- Uso consistente de `(positionService.getCandidatesByPosition as jest.Mock)`
+
+### 2. `backend/jest.config.js`
+- Agregado `testMatch: ['<rootDir>/src/**/*.test.ts']` para evitar que Jest ejecute tests duplicados desde `dist/`
+
+## Verificación:
+
+```bash
+npm --prefix ./backend run build   # ✅ Compilación exitosa
+npm --prefix ./backend test        # ✅ 5 tests passed, 0 failed
+```
+
+El endpoint `GET /positions/:id/candidates` está ahora correctamente implementado y testeado.
+
+---
+
+## Registro: 2026-06-27T20:39:00+02:00
+
+**Prompt:**
+al intentar ejecutar ts-node .\seed.ts powershell devuelve el siguiente mensaje: ts-node : El término 'ts-node' no se reconoce como nombre de un cmdlet, función, archivo de script o programa ejecutable. Diagnosticar que esta pasando y proporcionar vias de solucion
+
+**Respuesta:**
+## Diagnóstico
+
+`ts-node` está instalado localmente en `node_modules/.bin` del proyecto `backend`, pero no está en el PATH global de PowerShell. Por eso el comando `ts-node .\seed.ts` falla cuando se ejecuta directamente.
+
+## Soluciones
+
+**Opción 1 (recomendada): usar `npx` desde la carpeta `backend`**
+```powershell
+cd backend
+npx ts-node prisma/seed.ts
+```
+
+**Opción 2: usar la ruta local del binario**
+```powershell
+cd backend
+.\node_modules\.bin\ts-node prisma\seed.ts
+```
+
+**Opción 3: instalar `ts-node` globalmente**
+```powershell
+npm install -g ts-node
+```
+
+**Causa raíz:** `ts-node` es una dependencia `devDependencies` local. PowerShell no busca en `node_modules/.bin` a menos que uses `npx` o referencíes la ruta completa.
+
+---
+
+## Registro: 2026-06-27T20:42:00+02:00
+
+**Prompt:**
+ejecuta seed.ts tu mismo, que yo no tenga que intervenir
+
+**Respuesta:**
+Se detectó incompatibilidad entre `ts-node` v9 (instalado) y TypeScript v4.9+. La solución fue instalar `tsx` como devDependency y ejecutar el seed con él.
+
+## Pasos ejecutados:
+
+1. Detectado error: `ts-node` v9 incompatible con TypeScript moderno (`resolveTypeReferenceDirectives` signature mismatch)
+2. Instalado `tsx` como devDependency: `npm install --save-dev tsx`
+3. Ejecutado el seed: `npx tsx prisma/seed.ts` → **exit code 0** (éxito)
+4. Eliminado archivo temporal `tsconfig.seed.json`
+
+Para futuras ejecuciones del seed:
+```powershell
+npx tsx prisma/seed.ts
+```
+Ejecutado desde el directorio `backend`.
+
+---
