@@ -23,6 +23,50 @@ interface PositionCandidatesResult {
     candidates: CandidateResult[];
 }
 
+interface PositionSummary {
+    id: number;
+    title: string;
+    description: string;
+    status: string;
+    location: string;
+    employmentType: string | null;
+    salaryMin: number | null;
+    salaryMax: number | null;
+}
+
+export const getPositions = async (): Promise<PositionSummary[]> => {
+    const positions = await prisma.position.findMany({
+        where: {
+            status: 'Open',
+            isVisible: true
+        },
+        orderBy: {
+            title: 'asc'
+        },
+        select: {
+            id: true,
+            title: true,
+            description: true,
+            status: true,
+            location: true,
+            employmentType: true,
+            salaryMin: true,
+            salaryMax: true
+        }
+    });
+
+    return positions.map((position: any) => ({
+        id: position.id,
+        title: position.title,
+        description: position.description,
+        status: position.status,
+        location: position.location,
+        employmentType: position.employmentType,
+        salaryMin: position.salaryMin,
+        salaryMax: position.salaryMax
+    }));
+};
+
 export const getCandidatesByPosition = async (positionId: number): Promise<PositionCandidatesResult> => {
     const position = await prisma.position.findUnique({
         where: { id: positionId }

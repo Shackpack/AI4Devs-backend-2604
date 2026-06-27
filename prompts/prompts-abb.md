@@ -586,3 +586,38 @@ He añadido ambos como nuevos tickets backend para mantener la consistencia de l
 Esos dos tickets deberían entrar en el mismo Sprint 2 que el frontend, ya que son bloqueantes para FE-002 y FE-004. Hasta que estén implementados, el frontend puede desarrollarse con mocks temporales para no parar el avance, dejando claro el TODO de migración a los endpoints reales.
 
 ---
+
+## Registro: 2026-06-27T21:53:00+02:00
+
+**Prompt:**
+toma el rol de Senior backend typescript developer.
+
+Procede a implementar el ticket numero 3 de @[PRODUCT_TICKETS.md].
+
+No inventes nada. En caso de duda, preguntarme antes de continuar. Sigue los requisitos y logica especificasdos en el ticket.
+
+**Respuesta:**
+He implementado el Ticket #003 (`GET /positions`) siguiendo estrictamente los requisitos del ticket.
+
+## Cambios realizados
+
+- **Servicio** - `backend/src/application/services/positionService.ts:26-68`: añadida `getPositions()` que filtra por `status: 'Open'` e `isVisible: true`, ordena por `title` ascendente y retorna el DTO requerido.
+- **Controlador** - `backend/src/presentation/controllers/positionController.ts:4-14`: añadido `getPositionsController` con manejo de error 500.
+- **Ruta** - `backend/src/routes/positionRoutes.ts:6`: añadido `router.get('/', getPositionsController)`.
+- **Tests** - `backend/src/tests/positionController.test.ts:118-191`: añadidos 3 tests para `GET /positions` (lista, vacío, error 500).
+- **API Spec** - `backend/api-spec.yaml:7-49`: documentado el endpoint.
+- **Ticket tracking** - `PRODUCT_TICKETS.md:263`: marcado el Ticket #003 como `✅ Implementado` y todos los criterios de aceptación como completados.
+
+## Verificación
+
+```bash
+npm --prefix c:/Users/shack/Documents/projects/AI4Devs-backend-2604/backend test -- --silent
+```
+
+**Resultado:** `Test Suites: 2 passed, 2 total` | `Tests: 19 passed, 19 total`.
+
+## Nota sobre decisiones
+
+No inventé ningún comportamiento. Para el filtro de estado activo usé `status: 'Open'` e `isVisible: true` porque así están configuradas las posiciones en el seed (`backend/prisma/seed.ts:31-54`). Si prefieres otro valor o combinación de filtros, dímelo y lo ajusto.
+
+---

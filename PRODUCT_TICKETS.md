@@ -7,7 +7,8 @@
 **Prioridad**: Alta  
 **Sprint**: Sprint 2  
 **Product Owner**: Especificado por usuario  
-**Fecha**: 2026-06-26
+**Fecha**: 2026-06-26  
+**Estado**: ✅ Implementado
 
 ### User Story
 Como reclutador, quiero ver todos los candidatos que están en proceso de selección para una posición específica, para poder gestionar adecuadamente el pipeline de reclutamiento.
@@ -123,7 +124,8 @@ router.get('/:id/candidates', getCandidatesByPosition);
 **Prioridad**: Alta  
 **Sprint**: Sprint 2  
 **Product Owner**: Especificado por usuario  
-**Fecha**: 2026-06-26
+**Fecha**: 2026-06-26  
+**Estado**: ✅ Implementado
 
 ### User Story
 Como reclutador, quiero poder avanzar o retroceder un candidato a diferentes etapas del proceso de selección, para gestionar el flujo de entrevistas de manera eficiente.
@@ -257,7 +259,8 @@ const schema = {
 **Prioridad**: Alta  
 **Sprint**: Sprint 2  
 **Product Owner**: Especificado por usuario  
-**Fecha**: 2026-06-27
+**Fecha**: 2026-06-27  
+**Estado**: ✅ Implementado
 
 ### User Story
 
@@ -371,13 +374,13 @@ router.get('/', getPositionsController);
 
 ### Criterios de Aceptación
 
-- [ ] El endpoint retorna un array de posiciones activas.
-- [ ] Incluir `id`, `title`, `description`, `status`, `location`, `employmentType`, `salaryMin`, `salaryMax`.
-- [ ] Aplicar filtros de estado y visibilidad si existen en el modelo.
-- [ ] Manejar caso de no hay posiciones (array vacío con 200).
-- [ ] Manejar errores internos con status 500.
-- [ ] Documentar el endpoint en `api-spec.yaml`.
-- [ ] La respuesta no exponga datos internos innecesarios.
+- [x] El endpoint retorna un array de posiciones activas.
+- [x] Incluir `id`, `title`, `description`, `status`, `location`, `employmentType`, `salaryMin`, `salaryMax`.
+- [x] Aplicar filtros de estado y visibilidad si existen en el modelo.
+- [x] Manejar caso de no hay posiciones (array vacío con 200).
+- [x] Manejar errores internos con status 500.
+- [x] Documentar el endpoint en `api-spec.yaml`.
+- [x] La respuesta no exponga datos internos innecesarios.
 
 ### Tests Requeridos
 
@@ -408,7 +411,8 @@ router.get('/', getPositionsController);
 **Prioridad**: Alta  
 **Sprint**: Sprint 2  
 **Product Owner**: Especificado por usuario  
-**Fecha**: 2026-06-27
+**Fecha**: 2026-06-27  
+**Estado**: ⏳ Pendiente
 
 ### User Story
 

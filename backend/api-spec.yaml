@@ -4,6 +4,49 @@ info:
   version: 1.0.0
   description: API for managing candidate data in the AI4Devs recruitment system.
 paths:
+  /positions:
+    get:
+      summary: List all active positions
+      description: Returns a list of all active and visible positions available in the system.
+      responses:
+        '200':
+          description: List of positions retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    id:
+                      type: integer
+                      description: Unique identifier for the position
+                    title:
+                      type: string
+                      description: Title of the position
+                    description:
+                      type: string
+                      description: Brief description of the position
+                    status:
+                      type: string
+                      description: Current status of the position
+                    location:
+                      type: string
+                      description: Location of the position
+                    employmentType:
+                      type: string
+                      description: Type of employment (e.g., Full-time, Part-time)
+                      nullable: true
+                    salaryMin:
+                      type: number
+                      description: Minimum salary
+                      nullable: true
+                    salaryMax:
+                      type: number
+                      description: Maximum salary
+                      nullable: true
+        '500':
+          description: Internal server error
   /candidates:
     post:
       summary: Add a new candidate

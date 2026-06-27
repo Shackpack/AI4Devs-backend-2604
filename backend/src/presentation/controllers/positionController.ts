@@ -1,5 +1,17 @@
 import { Request, Response } from 'express';
-import { getCandidatesByPosition } from '../../application/services/positionService';
+import { getCandidatesByPosition, getPositions } from '../../application/services/positionService';
+
+export const getPositionsController = async (req: Request, res: Response) => {
+    try {
+        const positions = await getPositions();
+        res.json(positions);
+    } catch (error: unknown) {
+        if (error instanceof Error) {
+            return res.status(500).json({ error: 'Internal Server Error', message: error.message });
+        }
+        res.status(500).json({ error: 'Internal Server Error' });
+    }
+};
 
 export const getCandidatesByPositionController = async (req: Request, res: Response) => {
     try {
