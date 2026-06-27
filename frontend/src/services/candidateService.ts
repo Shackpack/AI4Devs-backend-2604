@@ -10,9 +10,10 @@ const API_BASE_URL = 'http://localhost:3010';
 
 const extractErrorMessage = (error: unknown, defaultMessage: string): string => {
   if (error instanceof AxiosError) {
-    const serverMessage = error.response?.data?.error || error.response?.data?.message;
+    const axiosErr = error as AxiosError<{ error?: string; message?: string }>;
+    const serverMessage = axiosErr.response?.data?.error || axiosErr.response?.data?.message;
     if (serverMessage) return serverMessage;
-    if (error.message) return error.message;
+    if (axiosErr.message) return axiosErr.message;
   }
   if (error instanceof Error) {
     return error.message;

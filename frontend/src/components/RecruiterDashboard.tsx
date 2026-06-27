@@ -1,25 +1,12 @@
 import React, { useState } from 'react';
-import { Button, Card, Col, Container, Form, InputGroup, Row } from 'react-bootstrap';
+import { Button, Card, Col, Container, Row } from 'react-bootstrap';
 import { Link } from 'react-router-dom';
 import logo from '../assets/lti-logo.png';
-import { PositionPipeline } from './PositionPipeline';
+import { PositionKanbanBoard } from './PositionKanbanBoard';
+import { PositionSelector } from './PositionSelector';
 
 const RecruiterDashboard: React.FC = () => {
-  const [inputValue, setInputValue] = useState<string>('');
   const [selectedPositionId, setSelectedPositionId] = useState<number | null>(null);
-
-  const handleLoadPipeline = () => {
-    const parsed = parseInt(inputValue, 10);
-    if (!isNaN(parsed) && parsed > 0) {
-      setSelectedPositionId(parsed);
-    }
-  };
-
-  const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
-    if (e.key === 'Enter') {
-      handleLoadPipeline();
-    }
-  };
 
   return (
     <Container className="mt-5">
@@ -28,35 +15,25 @@ const RecruiterDashboard: React.FC = () => {
       </div>
       <h1 className="mb-4 text-center">Dashboard del Reclutador</h1>
 
-      <Row className="g-4">
-        <Col md={6}>
+      <Row className="g-4 align-items-start">
+        <Col md={4} lg={3}>
           <Card className="shadow p-4">
             <h5 className="mb-4">Añadir Candidato</h5>
             <Link to="/add-candidate">
-              <Button variant="primary" className="btn-block">
+              <Button variant="primary" className="w-100">
                 Añadir Nuevo Candidato
               </Button>
             </Link>
           </Card>
         </Col>
 
-        <Col md={6}>
+        <Col md={8} lg={9}>
           <Card className="shadow p-4">
             <h5 className="mb-3">Pipeline de Posición</h5>
-            <InputGroup>
-              <Form.Control
-                type="number"
-                min={1}
-                placeholder="ID de posición"
-                value={inputValue}
-                onChange={(e) => setInputValue(e.target.value)}
-                onKeyDown={handleKeyDown}
-                aria-label="ID de posición"
-              />
-              <Button variant="outline-primary" onClick={handleLoadPipeline}>
-                Ver pipeline
-              </Button>
-            </InputGroup>
+            <PositionSelector
+              selectedPositionId={selectedPositionId}
+              onPositionChange={setSelectedPositionId}
+            />
           </Card>
         </Col>
       </Row>
@@ -64,7 +41,7 @@ const RecruiterDashboard: React.FC = () => {
       {selectedPositionId !== null && (
         <Row className="mt-4">
           <Col>
-            <PositionPipeline positionId={selectedPositionId} />
+            <PositionKanbanBoard positionId={selectedPositionId} />
           </Col>
         </Row>
       )}

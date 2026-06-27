@@ -783,3 +783,53 @@ He implementado el Ticket FE-001 (Dashboard de Pipeline por Posición) siguiendo
 - ✅ `positionTitle` e `positionId` mostrados en la cabecera del Card.
 
 ---
+
+## Registro: 2026-06-27T22:39:00+02:00
+
+**Prompt:**
+toma el rol de Senior frontend typescript developer.
+
+Procede a implementar el ticket numero 2 de @[FRONTEND_TICKETS.md].
+
+No inventes nada. En caso de duda, preguntarme antes de continuar. Sigue los requisitos y logica especificasdos en el ticket.
+
+**Respuesta:**
+He implementado el Ticket FE-002 (Kanban de Posición en el Dashboard) siguiendo estrictamente los requisitos del ticket. También corregí el error de build de FE-001 (`TS18046` en `candidateService.ts`).
+
+## Fix previo: error de build FE-001
+
+- **`frontend/src/services/candidateService.ts`**: cast explícito a `AxiosError<{error?; message?}>` dentro del guard `instanceof AxiosError` para resolver `TS18046` con TypeScript 4.9 strict mode.
+
+## Archivos creados
+
+- **`frontend/src/services/positionService.ts`**: `getPositions()` → `GET /positions`, `getInterviewStepsByPosition(id)` → `GET /positions/:id/interview-steps`.
+- **`frontend/src/utils/groupCandidatesByStep.ts`**: agrupa `CandidateInPipeline[]` por `step.id` para formar columnas Kanban. Exporta `KanbanColumnData`.
+- **`frontend/src/utils/getStepBadgeVariant.ts`**: devuelve variante Bootstrap (`success`/`danger`/`warning`/`primary`) según nombre de etapa. `isFinalStep()` detecta `Hired`, `Rejected`, `On Hold`.
+- **`frontend/src/components/PositionSelector.tsx`**: `Form.Select` que carga posiciones de `GET /positions`, selecciona la primera por defecto, emite `onPositionChange`. Estados loading/error/vacío.
+- **`frontend/src/components/CandidateKanbanCard.tsx`**: tarjeta draggable (`useDraggable` de `@dnd-kit/core`) con todos los campos requeridos (nombre, badge de etapa con color, puntuación, fecha, progreso con `ProgressBar`). Resalta visualmente etapas finales (borde lateral de color). Badge "Guardando..." cuando `disabled`.
+- **`frontend/src/components/KanbanColumn.tsx`**: zona droppable (`useDroppable`) con indicador visual `isOver`. Muestra counter de candidatos con `Badge`. Empty state "Sin candidatos".
+- **`frontend/src/components/StageConfirmationModal.tsx`**: modal `backdrop="static"` con nombre candidato, etapa anterior → nueva, textarea de notas (máx 500 chars), botones Confirmar/Cancelar, spinner durante envío.
+- **`frontend/src/components/PositionKanbanBoard.tsx`**: orquesta `DndContext` + `PointerSensor`, carga paralela `Promise.all([getInterviewStepsByPosition, getCandidatesByPosition])`, `handleDragEnd` con no-op si misma columna, abre `StageConfirmationModal`, llama `updateCandidateStage` al confirmar, refresca tablero, muestra `Alert` de éxito temporal (4s). Estados loading/error con Reintentar/empty state para etapas vacías.
+- **`frontend/src/components/RecruiterDashboard.tsx`** (modificado): sustituye el input numérico de FE-001 por `PositionSelector` + `PositionKanbanBoard`. Layout con Bootstrap grid (Col md=4 para acciones, Col md=8 para selector, tablero en Row debajo).
+
+## Dependencia instalada
+
+- `@dnd-kit/core`, `@dnd-kit/sortable`, `@dnd-kit/utilities` añadidos con `npm install`.
+
+## Criterios de aceptación cubiertos
+
+- ✅ Selector de posiciones visible con primera selección automática.
+- ✅ Tablero Kanban con columnas por etapa ordenadas por `orderIndex` ascendente.
+- ✅ Tarjetas agrupadas en su columna actual.
+- ✅ Tarjeta muestra: nombre, etapa (badge), puntuación, fecha, progreso.
+- ✅ Drag and drop entre columnas con `@dnd-kit`.
+- ✅ Modal de confirmación al soltar en columna diferente.
+- ✅ `PUT /candidates/:id/stage` al confirmar + refresco del tablero.
+- ✅ No-op si se suelta en la misma columna.
+- ✅ Spinner/loading durante carga y actualización; badge "Guardando..." en tarjeta.
+- ✅ Empty state para posiciones vacías, etapas sin candidatos, columnas sin candidatos.
+- ✅ Error con botón "Reintentar" en carga y actualización.
+- ✅ Scroll horizontal en desktop (flexbox `overflowX: auto`), columnas apilables en móvil.
+- ✅ Etapas finales (`Hired`, `Rejected`, `On Hold`) resaltadas visualmente (borde + fondo).
+
+---
