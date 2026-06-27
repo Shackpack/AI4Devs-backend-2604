@@ -2,9 +2,11 @@ import { useDraggable } from '@dnd-kit/core';
 import { CSS } from '@dnd-kit/utilities';
 import React from 'react';
 import { Badge, Card, ProgressBar } from 'react-bootstrap';
+import { CheckLg, PauseFill, XLg } from 'react-bootstrap-icons';
 import { CandidateInPipeline } from '../types/api';
 import { formatScore } from '../utils/formatScore';
-import { getStepBadgeVariant, isFinalStep } from '../utils/getStepBadgeVariant';
+import { getStepBadgeVariant } from '../utils/getStepBadgeVariant';
+import { isFinalStep } from '../utils/isFinalStep';
 
 interface CandidateKanbanCardProps {
   candidate: CandidateInPipeline;
@@ -18,6 +20,14 @@ const formatDate = (isoDate: string): string => {
     month: '2-digit',
     year: 'numeric',
   });
+};
+
+const getFinalStepIcon = (stepName: string): React.ReactElement | null => {
+  const normalized = stepName.trim().toLowerCase();
+  if (normalized === 'hired') return <CheckLg className="ms-1" />;
+  if (normalized === 'rejected') return <XLg className="ms-1" />;
+  if (normalized === 'on hold') return <PauseFill className="ms-1" />;
+  return null;
 };
 
 export const CandidateKanbanCard: React.FC<CandidateKanbanCardProps> = ({
@@ -64,8 +74,9 @@ export const CandidateKanbanCard: React.FC<CandidateKanbanCardProps> = ({
       <Card.Body className="p-2">
         <div className="d-flex justify-content-between align-items-start mb-1">
           <span className="fw-semibold small">{candidate.fullName}</span>
-          <Badge bg={badgeVariant} className="ms-1 text-wrap text-end" style={{ fontSize: '0.7rem' }}>
+          <Badge bg={badgeVariant} className="ms-1 text-wrap text-end d-flex align-items-center gap-1" style={{ fontSize: '0.7rem' }}>
             {candidate.currentInterviewStep.name}
+            {getFinalStepIcon(candidate.currentInterviewStep.name)}
           </Badge>
         </div>
         <div className="text-muted" style={{ fontSize: '0.75rem' }}>

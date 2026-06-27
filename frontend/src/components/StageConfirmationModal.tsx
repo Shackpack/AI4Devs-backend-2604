@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
-import { Button, Form, Modal, Spinner } from 'react-bootstrap';
+import { Alert, Button, Form, Modal, Spinner } from 'react-bootstrap';
+import { isFinalStep } from '../utils/isFinalStep';
 
 interface StageConfirmationModalProps {
   show: boolean;
@@ -34,6 +35,8 @@ export const StageConfirmationModal: React.FC<StageConfirmationModalProps> = ({
     onCancel();
   };
 
+  const movingToFinalStep = isFinalStep(newStepName);
+
   return (
     <Modal show={show} onHide={handleCancel} backdrop="static" centered>
       <Modal.Header closeButton={!loading}>
@@ -43,6 +46,12 @@ export const StageConfirmationModal: React.FC<StageConfirmationModalProps> = ({
         <p className="mb-3">
           De <strong>{previousStepName}</strong> a <strong>{newStepName}</strong>
         </p>
+        {movingToFinalStep && (
+          <Alert variant="warning" className="mb-3">
+            <strong>Atención:</strong> estás moviendo al candidato a una etapa final (
+            <strong>{newStepName}</strong>). Esta acción indica el cierre del proceso de selección.
+          </Alert>
+        )}
         <Form.Group controlId="stageNotes">
           <Form.Label>Notas opcionales</Form.Label>
           <Form.Control

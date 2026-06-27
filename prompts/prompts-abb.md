@@ -912,3 +912,57 @@ He implementado el Ticket FE-004 (Actualizar Etapa de Candidato desde el Pipelin
 - ✅ Campo `notes` soportado vía `StageConfirmationModal` (FE-005).
 
 ---
+
+## Registro: 2026-06-27T23:22:00+02:00
+
+**Prompt:**
+revisar el progreso de implementacion de los tickets en @[FRONTEND_TICKETS.md]
+
+**Respuesta:**
+## Estado de implementación — Frontend Tickets
+
+- **FE-001** ✅ COMPLETO: `PositionPipeline.tsx`, `candidateService.ts` (`getCandidatesByPosition`), `types/api.ts`.
+- **FE-002** ✅ COMPLETO: `PositionSelector.tsx`, `PositionKanbanBoard.tsx`, `KanbanColumn.tsx`, `CandidateKanbanCard.tsx`, `positionService.ts`, `groupCandidatesByStep.ts`, `RecruiterDashboard.tsx`.
+- **FE-003** ✅ COMPLETO: `CandidatePipelineRow.tsx`, `formatScore.ts`, `getStepBadgeVariant.ts`.
+- **FE-004** ✅ COMPLETO: `CandidateStageUpdater.tsx`, `CandidatePipelineRow.tsx` (integrado).
+- **FE-005** ✅ COMPLETO (implementado como dependencia de FE-002): `StageConfirmationModal.tsx`.
+- **FE-006** ⚠️ PARCIAL: variantes y `isFinalStep` implementados en `getStepBadgeVariant.ts`, resalte visual en `CandidateKanbanCard`. Pendiente: fichero separado `isFinalStep.ts`, iconos en badges, advertencia en modal para estados finales, fondo de fila en `CandidatePipelineRow`.
+- **FE-007** ❌ PENDIENTE: `utils/errorHandler.ts`, `ToastNotification.tsx`, actualización de `StageConfirmationModal` para mostrar errores sin cerrarse, autodescarte de éxito a 5 segundos.
+- **FE-008** ⚠️ PARCIAL: `RecruiterDashboard.tsx` en TypeScript con selector + tablero. Pendiente: eliminar `RecruiterDashboard.js`, mover inicialización de `selectedPositionId` al dashboard (actualmente en `PositionSelector`).
+
+---
+
+## Registro: 2026-06-27T23:24:00+02:00
+
+**Prompt:**
+toma el rol de Senior frontend typescript developer.
+
+Procede a implementar el ticket numero 6 de @FRONTEND_TICKETS.md .
+
+No inventes nada. En caso de duda, preguntarme antes de continuar. Sigue los requisitos y logica especificasdos en el ticket.
+
+**Respuesta:**
+He implementado el Ticket FE-006 (Estados Especiales de Candidato — Hired, Rejected, On Hold).
+
+## Archivos creados/modificados
+
+- **`frontend/src/utils/isFinalStep.ts`** (nuevo): exporta `FinalStepType = 'Hired' | 'Rejected' | 'OnHold'`, `FINAL_STEP_NAMES: string[]` y `isFinalStep(stepName): boolean` con comparación case-insensitive. Exactamente según el spec del ticket.
+
+- **`frontend/src/utils/getStepBadgeVariant.ts`** (modificado): refactorizado para re-exportar `isFinalStep` desde el nuevo fichero dedicado (`export { isFinalStep } from './isFinalStep'`) y la lógica interna alineada al spec exacto del ticket (`trim().toLowerCase()` con ifs explícitos).
+
+- **`frontend/src/components/StageConfirmationModal.tsx`** (modificado): añadida advertencia `Alert variant="warning"` en el body del modal cuando `isFinalStep(newStepName)` es `true`, indicando que es una acción final. Se mantiene `backdrop="static"` y el modal no se cierra al hacer clic fuera.
+
+- **`frontend/src/components/CandidatePipelineRow.tsx`** (modificado): importa `isFinalStep` y aplica `className="table-light"` al `<tr>` cuando el candidato está en etapa final, destacando visualmente la fila.
+
+- **`frontend/src/components/CandidateKanbanCard.tsx`** (modificado): importa `CheckLg`, `XLg`, `PauseFill` de `react-bootstrap-icons` (ya instalado). Añadida función `getFinalStepIcon` que devuelve el icono correspondiente por etapa. El icono se renderiza dentro del `Badge` junto al nombre de la etapa.
+
+## Criterios de aceptación cubiertos
+
+- ✅ Etapas finales identificadas correctamente (case-insensitive) vía `isFinalStep`.
+- ✅ Cada estado final tiene estilo distintivo: badge `success`/`danger`/`warning` + icono (✓/✗/⏸).
+- ✅ Candidatos en estado final visibles en pipeline con resalte (fondo `bg-light` en fila y tarjeta).
+- ✅ El selector de etapas permite elegir estados finales si están en el flow (heredado de FE-004).
+- ✅ Advertencia adicional en `StageConfirmationModal` antes de mover a estado final.
+- ✅ Lista centralizada en `FINAL_STEP_NAMES` — un único punto de cambio para futuros estados.
+
+---

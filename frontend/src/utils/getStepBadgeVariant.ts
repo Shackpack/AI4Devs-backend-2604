@@ -1,14 +1,9 @@
-const FINAL_STEP_VARIANTS: Record<string, string> = {
-  hired: 'success',
-  rejected: 'danger',
-  'on hold': 'warning',
-};
+export { isFinalStep } from './isFinalStep';
 
 export const getStepBadgeVariant = (stepName: string): string => {
-  const key = stepName.toLowerCase();
-  return FINAL_STEP_VARIANTS[key] ?? 'primary';
-};
-
-export const isFinalStep = (stepName: string): boolean => {
-  return stepName.toLowerCase() in FINAL_STEP_VARIANTS;
+  const normalized = stepName.trim().toLowerCase();
+  if (normalized === 'hired') return 'success';
+  if (normalized === 'rejected') return 'danger';
+  if (normalized === 'on hold') return 'warning';
+  return 'primary';
 };

@@ -3,6 +3,7 @@ import { Badge, ProgressBar } from 'react-bootstrap';
 import { CandidateInPipeline, InterviewStep } from '../types/api';
 import { formatScore } from '../utils/formatScore';
 import { getStepBadgeVariant } from '../utils/getStepBadgeVariant';
+import { isFinalStep } from '../utils/isFinalStep';
 import { CandidateStageUpdater } from './CandidateStageUpdater';
 
 interface CandidatePipelineRowProps {
@@ -34,10 +35,13 @@ export const CandidatePipelineRow: React.FC<CandidatePipelineRowProps> = ({
     onStageUpdated !== undefined &&
     onStageError !== undefined;
 
+  const final = isFinalStep(candidate.currentInterviewStep.name);
+
   return (
     <tr
       onClick={() => onClick?.(candidate)}
       style={{ cursor: onClick ? 'pointer' : 'default' }}
+      className={final ? 'table-light' : undefined}
     >
       <td>{candidate.fullName}</td>
       <td>
