@@ -1,52 +1,12 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { Alert, Badge, Button, Card, Col, ProgressBar, Row, Spinner, Table } from 'react-bootstrap';
+import { Alert, Button, Card, Col, Row, Spinner, Table } from 'react-bootstrap';
 import { getCandidatesByPosition } from '../services/candidateService';
-import { CandidateInPipeline, PositionPipelineResponse } from '../types/api';
+import { PositionPipelineResponse } from '../types/api';
+import { CandidatePipelineRow } from './CandidatePipelineRow';
 
 interface PositionPipelineProps {
   positionId: number;
 }
-
-const formatScore = (score: number | null): string => {
-  if (score === null || score === 0) return 'Sin evaluar';
-  return score.toFixed(2);
-};
-
-const formatDate = (isoDate: string): string => {
-  return new Date(isoDate).toLocaleString('es-ES', {
-    day: '2-digit',
-    month: '2-digit',
-    year: 'numeric',
-    hour: '2-digit',
-    minute: '2-digit',
-  });
-};
-
-const getInterviewProgress = (completed: number, total: number): number => {
-  if (total === 0) return 0;
-  return Math.round((completed / total) * 100);
-};
-
-const CandidateRow: React.FC<{ candidate: CandidateInPipeline }> = ({ candidate }) => {
-  const progress = getInterviewProgress(candidate.completedInterviews, candidate.totalInterviews);
-
-  return (
-    <tr>
-      <td>{candidate.fullName}</td>
-      <td>
-        <Badge bg="primary">{candidate.currentInterviewStep.name}</Badge>
-      </td>
-      <td>{formatScore(candidate.averageScore)}</td>
-      <td>{formatDate(candidate.applicationDate)}</td>
-      <td>
-        <span className="me-2">
-          {candidate.completedInterviews}/{candidate.totalInterviews}
-        </span>
-        <ProgressBar now={progress} label={`${progress}%`} style={{ minWidth: '80px' }} />
-      </td>
-    </tr>
-  );
-};
 
 export const PositionPipeline: React.FC<PositionPipelineProps> = ({ positionId }) => {
   const [pipeline, setPipeline] = useState<PositionPipelineResponse | null>(null);
@@ -124,7 +84,7 @@ export const PositionPipeline: React.FC<PositionPipelineProps> = ({ positionId }
           </thead>
           <tbody>
             {pipeline.candidates.map((candidate) => (
-              <CandidateRow key={candidate.applicationId} candidate={candidate} />
+              <CandidatePipelineRow key={candidate.applicationId} candidate={candidate} />
             ))}
           </tbody>
         </Table>

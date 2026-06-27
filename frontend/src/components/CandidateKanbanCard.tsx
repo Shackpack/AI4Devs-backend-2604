@@ -3,6 +3,7 @@ import { CSS } from '@dnd-kit/utilities';
 import React from 'react';
 import { Badge, Card, ProgressBar } from 'react-bootstrap';
 import { CandidateInPipeline } from '../types/api';
+import { formatScore } from '../utils/formatScore';
 import { getStepBadgeVariant, isFinalStep } from '../utils/getStepBadgeVariant';
 
 interface CandidateKanbanCardProps {
@@ -10,11 +11,6 @@ interface CandidateKanbanCardProps {
   positionId: number;
   disabled?: boolean;
 }
-
-const formatScore = (score: number | null): string => {
-  if (score === null || score === 0) return 'Sin evaluar';
-  return score.toFixed(2);
-};
 
 const formatDate = (isoDate: string): string => {
   return new Date(isoDate).toLocaleDateString('es-ES', {

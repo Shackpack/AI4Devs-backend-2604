@@ -833,3 +833,40 @@ He implementado el Ticket FE-002 (Kanban de Posición en el Dashboard) siguiendo
 - ✅ Etapas finales (`Hired`, `Rejected`, `On Hold`) resaltadas visualmente (borde + fondo).
 
 ---
+
+## Registro: 2026-06-27T23:15:00+02:00
+
+**Prompt:**
+toma el rol de Senior frontend typescript developer.
+
+Procede a implementar el ticket numero 3 de @[FRONTEND_TICKETS.md].
+
+No inventes nada. En caso de duda, preguntarme antes de continuar. Sigue los requisitos y logica especificasdos en el ticket.
+
+**Respuesta:**
+He implementado el Ticket FE-003 (Tarjeta de Candidato con Detalle del Proceso).
+
+## Archivos creados/modificados
+
+- **`frontend/src/utils/formatScore.ts`** (nuevo): función `formatScore(score: number | null): string` — devuelve `'Sin evaluar'` si `null` o `0`, o `score.toFixed(2)` en caso contrario. Exactamente según el spec del ticket.
+- **`frontend/src/components/CandidatePipelineRow.tsx`** (nuevo): componente `<tr>` con props `candidate: CandidateInPipeline` y `onClick?: (candidate) => void`. Muestra todos los campos requeridos: `fullName`, `currentInterviewStep.name` como `Badge` con variante de `getStepBadgeVariant`, `averageScore` formateado con `formatScore`, `applicationDate` con `toLocaleString('es-ES')`, y progreso `completedInterviews/totalInterviews` con `ProgressBar`. Cursor pointer cuando `onClick` está definido.
+- **`frontend/src/components/CandidateKanbanCard.tsx`** (modificado): sustituida la función `formatScore` inline por `import { formatScore } from '../utils/formatScore'`, eliminando la duplicación.
+- **`frontend/src/components/PositionPipeline.tsx`** (modificado): eliminada función `formatScore` inline y componente `CandidateRow` local; ahora usa `CandidatePipelineRow` de FE-003. Badge de etapa usa `getStepBadgeVariant` heredado del import de `CandidatePipelineRow`.
+
+## Archivos sin cambios (ya completos)
+
+- `frontend/src/utils/getStepBadgeVariant.ts` — ya existía con variantes correctas.
+- `frontend/src/types/api.ts` — ya tenía `CandidateInPipeline` completo.
+
+## Criterios de aceptación cubiertos
+
+- ✅ `CandidatePipelineRow` muestra todos los campos requeridos.
+- ✅ Etapa actual como `Badge` con variante de color por etapa.
+- ✅ Puntuación con 2 decimales o "Sin evaluar".
+- ✅ Fecha en formato locale `es-ES`.
+- ✅ Progreso como `completadas / total` + `ProgressBar`.
+- ✅ `onClick` opcional preparado para navegación/detalle futuro.
+- ✅ Responsive: `CandidatePipelineRow` en tabla (escritorio vía `PositionPipeline`), `CandidateKanbanCard` como tarjeta (móvil/Kanban vía FE-002).
+- ✅ `formatScore` centralizado en util compartido, sin duplicación.
+
+---
