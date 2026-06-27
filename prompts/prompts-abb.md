@@ -419,3 +419,64 @@ npx tsx prisma/seed.ts
 Ejecutado desde el directorio `backend`.
 
 ---
+
+## Registro: 2026-06-27T20:51:00+02:00
+
+**Prompt:**
+toma el rol de Senior backend typescript developer.
+
+Procede a implementar el ticket numero 2.
+
+No inventes nada. En caso de duda, preguntarme antes de continuar. Sigue los requisitos y logica especificasdos en el ticket
+
+**Respuesta:**
+Implementado el Ticket #002 como Senior Backend TypeScript Developer.
+
+## Archivos Creados/Modificados:
+
+### 1. `backend/src/application/services/candidateService.ts`
+- Agregada instancia de `PrismaClient`
+- Agregada función `updateCandidateStage(candidateId, positionId, newInterviewStepId, notes?)`
+- Validaciones implementadas:
+  - Candidato existe (error: `Candidate not found`)
+  - Aplicación existe para candidato + posición (error: `Application not found`)
+  - Nuevo step existe (error: `Interview step not found`)
+  - Nuevo step pertenece al mismo `interviewFlow` de la posición (error: `Interview step does not belong to the position flow`)
+- Actualiza `currentInterviewStep` y `notes` en tabla `Application`
+- Retorna `success`, `applicationId`, `previousStep`, `currentStep`, `message`
+
+### 2. `backend/src/presentation/controllers/candidateController.ts`
+- Agregada función `updateCandidateStage`
+- Valida `candidateId` numérico
+- Valida `positionId` y `newInterviewStepId` sean números obligatorios
+- Valida `notes` opcional sea string
+- Mapea errores a códigos HTTP 400/404/500 según especificación
+
+### 3. `backend/src/routes/candidateRoutes.ts`
+- Agregada ruta: `PUT /candidates/:id/stage`
+
+### 4. `backend/src/tests/candidateController.test.ts` (nuevo)
+- 11 tests unitarios cubriendo:
+  - `candidateId` no numérico (400)
+  - `positionId` faltante (400)
+  - `newInterviewStepId` faltante (400)
+  - `notes` no es string (400)
+  - Candidato no encontrado (404)
+  - Aplicación no encontrada (404)
+  - Step inválido (400)
+  - Step no pertenece al flow de la posición (400)
+  - Actualización exitosa con notas
+  - Actualización exitosa sin notas
+  - Error interno inesperado (500)
+
+## Verificación:
+
+```bash
+cd backend
+npm run build   # ✅ Compilación exitosa
+npm test        # ✅ 16 tests passed (5 de position + 11 de candidate)
+```
+
+El endpoint `PUT /candidates/:id/stage` está implementado y testeado correctamente.
+
+---

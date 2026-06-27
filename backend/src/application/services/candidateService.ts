@@ -1,8 +1,11 @@
+import { PrismaClient } from '@prisma/client';
 import { Candidate } from '../../domain/models/Candidate';
 import { validateCandidateData } from '../validator';
 import { Education } from '../../domain/models/Education';
 import { WorkExperience } from '../../domain/models/WorkExperience';
 import { Resume } from '../../domain/models/Resume';
+
+const prisma = new PrismaClient();
 
 export const addCandidate = async (candidateData: any) => {
     try {
@@ -62,4 +65,76 @@ export const findCandidateById = async (id: number): Promise<Candidate | null> =
         console.error('Error al buscar el candidato:', error);
         throw new Error('Error al recuperar el candidato');
     }
+};
+
+interface UpdateStageResult {
+    success: boolean;
+    applicationId: number;
+    previousStep: { id: number; name: string };
+    currentStep: { id: number; name: string };
+    message: string;
+}
+
+export const updateCandidateStage = async (
+    candidateId: number,
+    positionId: number,
+    newInterviewStepId: number,
+    notes?: string
+): Promise<UpdateStageResult> => {
+    const candidate = await prisma.candidate.findUnique({
+        where: { id: candidateId }
+    });
+
+    if (!candidate) {
+        throw new Error('Candidate not found');
+    }
+
+    const application = await prisma.application.findFirst({
+        where: { candidateId, positionId },
+        include: {
+            position: true,
+            interviewStep: true
+        }
+    });
+
+    if (!application) {
+        throw new Error('Application not found');
+    }
+
+    const newStep = await prisma.interviewStep.findUnique({
+        where: { id: newInterviewStepId }
+    });
+
+    if (!newStep) {
+        throw new Error('Interview step not found');
+    }
+
+    if (newStep.interviewFlowId !== application.position.interviewFlowId) {
+        throw new Error('Interview step does not belong to the position flow');
+    }
+
+    const updatedApplication = await prisma.application.update({
+        where: { id: application.id },
+        data: {
+            currentInterviewStep: newInterviewStepId,
+            notes: notes !== undefined ? notes : application.notes
+        },
+        include: {
+            interviewStep: true
+        }
+    });
+
+    return {
+        success: true,
+        applicationId: application.id,
+        previousStep: {
+            id: application.interviewStep.id,
+            name: application.interviewStep.name
+        },
+        currentStep: {
+            id: updatedApplication.interviewStep.id,
+            name: updatedApplication.interviewStep.name
+        },
+        message: 'Etapa actualizada exitosamente'
+    };
 };
