@@ -169,7 +169,7 @@ export const PositionPipeline: React.FC<PositionPipelineProps> = ({ positionId }
 ### Dependencias
 
 - Backend Ticket #001 implementado y disponible.
-- Ticket FE-002 (selector de posición) para obtener `positionId`.
+- Ticket FE-002 (Kanban de posición) para consumir el contrato de datos y renderizar el pipeline como tablero.
 - Ticket FE-008 (navegación y layout) para integrar el componente en el dashboard.
 
 ### Notas / Riesgos
@@ -180,87 +180,243 @@ export const PositionPipeline: React.FC<PositionPipelineProps> = ({ positionId }
 
 ---
 
-## Ticket FE-002: Selector de Posición en el Dashboard
+## Ticket FE-002: Kanban de Posición en el Dashboard
 
-**Título**: Selector de Posición - Filtrar pipeline por vacante
+**Título**: Kanban de Posición - Gestionar candidatos por etapas en tablero visual
 
 **Prioridad**: Alta  
 **Sprint**: Sprint 2  
 **User Story relacionada**: US-FE-002  
-**Backend Ticket relacionado**: Ticket #003 - `GET /positions`  
-**Estimación**: 5 story points
+**Backend Ticket relacionado**: Ticket #001, Ticket #002, Ticket #003, Ticket #004  
+**Estimación**: 8 story points
 
 ### User Story
 
-Como reclutador, quiero seleccionar la posición desde un dropdown en el dashboard, para poder consultar el pipeline de candidatos de cada vacante disponible.
+Como reclutador, quiero visualizar y gestionar los candidatos de una posición en un tablero Kanban organizado por etapas del proceso de selección, para mover candidatos entre fases de forma visual e intuitiva y mantener el pipeline actualizado.
 
 ### Requisitos Funcionales
 
-1. **Selector de posiciones**: incluir un dropdown (`Form.Select` de React-Bootstrap) en la parte superior del dashboard de reclutador.
-2. **Opciones del selector**: cada opción debe mostrar al menos `positionId` y `positionTitle`.
-3. **Selección por defecto**: si existe al menos una posición, seleccionar la primera por defecto al cargar el dashboard.
-4. **Actualización automática**: al cambiar la posición seleccionada, se actualiza el componente `PositionPipeline` y se recarga la lista de candidatos.
-5. **Estado vacío**: si no hay posiciones disponibles, mostrar un mensaje informativo y deshabilitar el selector.
-6. **Persistencia opcional**: reflejar la posición seleccionada en query params (`?positionId=1`) para permitir recargar o compartir el estado (opcional, futuro).
+1. **Selector de posiciones**: incluir un dropdown (`Form.Select` de React-Bootstrap) en la parte superior del dashboard de reclutador para elegir la posición a visualizar.
+2. **Tablero Kanban**: mostrar un tablero con columnas que representan cada etapa del `InterviewFlow` asociado a la posición seleccionada, ordenadas por `orderIndex` ascendente.
+3. **Tarjetas de candidato**: cada candidato se representa como una tarjeta dentro de la columna correspondiente a su `currentInterviewStep`.
+4. **Datos visibles en tarjeta** (mínimo):
+   - Nombre completo (`fullName`).
+   - Etapa actual (`currentInterviewStep.name`) como `Badge`.
+   - Puntuación media (`averageScore`) con 2 decimales o "Sin evaluar".
+   - Fecha de aplicación (`applicationDate`) formateada a locale español.
+   - Progreso de entrevistas (`completedInterviews / totalInterviews`).
+5. **Agrupación por etapa**: las tarjetas deben agruparse automáticamente bajo la columna de su etapa actual.
+6. **Drag and drop para cambiar de etapa**: permitir arrastrar una tarjeta de candidato de una columna a otra. Al soltar en una columna diferente:
+   - Abrir el modal de confirmación (FE-005) con la etapa anterior y la nueva, permitiendo agregar notas opcionales.
+   - Al confirmar, invocar `PUT /candidates/:id/stage` con `positionId`, `newInterviewStepId` y `notes`.
+   - Refrescar el tablero tras éxito y mostrar mensaje de confirmación (FE-007).
+7. **No-op**: si la tarjeta se suelta en la misma columna, no realizar ninguna petición.
+8. **Deshabilitar durante carga**: la tarjeta y/o columna deben indicar visualmente cuando se está actualizando la etapa (spinner, overlay o badge "Guardando...").
+9. **Estados de UI**:
+   - Loading: mostrar spinner/skeleton mientras se cargan posiciones, etapas y candidatos.
+   - Empty state: mensajes claros cuando no hay posiciones, no hay etapas configuradas, o una columna no tiene candidatos.
+   - Error state: mensaje de error con botón "Reintentar" si falla alguna de las peticiones.
+10. **Estados finales**: resaltar visualmente las tarjetas en etapas finales (`Hired`, `Rejected`, `On Hold`) — integra FE-006.
+11. **Responsive**: en escritorio, el tablero permite scroll horizontal; en móvil, las columnas se apilan verticalmente.
+12. **Persistencia opcional**: reflejar la posición seleccionada en query params (`?positionId=1`) para permitir recargar o compartir el estado (opcional, futuro).
 
-### API Contract / Fuente de Datos
+### API Contract
 
 ```typescript
+// GET http://localhost:3010/positions
 interface PositionSummary {
   id: number;
   title: string;
-  // Puede extenderse con status, department, etc.
+}
+
+// GET http://localhost:3010/positions/{positionId}/interview-steps
+interface InterviewStep {
+  id: number;
+  name: string;
+  orderIndex: number;
+  interviewType?: string;
+}
+
+// GET http://localhost:3010/positions/{positionId}/candidates
+interface CurrentInterviewStep {
+  id: number;
+  name: string;
+  orderIndex: number;
+}
+
+interface CandidateInPipeline {
+  applicationId: number;
+  candidateId: number;
+  fullName: string;
+  currentInterviewStep: CurrentInterviewStep;
+  averageScore: number | null;
+  applicationDate: string; // ISO 8601
+  totalInterviews: number;
+  completedInterviews: number;
+}
+
+interface PositionPipelineResponse {
+  positionId: number;
+  positionTitle: string;
+  candidates: CandidateInPipeline[];
+}
+
+// PUT http://localhost:3010/candidates/{candidateId}/stage
+interface UpdateCandidateStageRequest {
+  positionId: number;
+  newInterviewStepId: number;
+  notes?: string;
+}
+
+interface UpdateCandidateStageResponse {
+  success: boolean;
+  applicationId: number;
+  previousStep: { id: number; name: string; };
+  currentStep: { id: number; name: string; };
+  message: string;
+}
+
+// Agrupación interna para el Kanban
+interface KanbanColumnData {
+  step: InterviewStep;
+  candidates: CandidateInPipeline[];
 }
 ```
 
-**Fuente de posiciones**:
-- **Backend Ticket #003**: endpoint `GET /positions` que retorna `PositionSummary[]`.
-- **Mock temporal (MVP)**: si el Ticket #003 aún no está implementado, se puede usar un mock local de posiciones con un TODO claro para migrar al endpoint real.
+**Errores esperados**:
+- `GET /positions`: 500.
+- `GET /positions/:id/interview-steps`: 400 (`positionId` no numérico), 404 (posición no encontrada), 500.
+- `GET /positions/:id/candidates`: 400 (`positionId` no numérico), 404 (posición no encontrada), 500.
+- `PUT /candidates/:id/stage`: 400 (step inválido), 404 (candidato/aplicación no encontrada), 500.
 
 ### Especificación Técnica
 
 #### Archivos a crear/modificar
 
 - `frontend/src/components/PositionSelector.tsx` (nuevo).
-- `frontend/src/components/RecruiterDashboard.tsx` (modificar para incluir selector y estado).
-- `frontend/src/services/positionService.ts` (nuevo) con `getPositions`.
-- `frontend/src/types/api.ts`.
+- `frontend/src/components/PositionKanbanBoard.tsx` (nuevo).
+- `frontend/src/components/KanbanColumn.tsx` (nuevo).
+- `frontend/src/components/CandidateKanbanCard.tsx` (nuevo).
+- `frontend/src/components/RecruiterDashboard.tsx` (modificar para integrar selector y tablero).
+- `frontend/src/services/positionService.ts` (nuevo) con `getPositions` y `getInterviewStepsByPosition`.
+- `frontend/src/services/candidateService.ts` (extender con `getCandidatesByPosition` y `updateCandidateStage`).
+- `frontend/src/types/api.ts` (nuevo o extender).
+- `frontend/src/utils/groupCandidatesByStep.ts` (nuevo) para agrupar candidatos por etapa.
+
+#### Dependencias de librería
+
+- `@dnd-kit/core`, `@dnd-kit/sortable`, `@dnd-kit/utilities` para drag and drop accesible.
+- O alternativa: `react-beautiful-dnd` (menos recomendada para React 18).
 
 #### Implementación detallada
 
 ```typescript
-// frontend/src/components/PositionSelector.tsx
-import React from 'react';
-import { Form } from 'react-bootstrap';
-import { PositionSummary } from '../types/api';
+// frontend/src/services/positionService.ts
+import axios from 'axios';
+import { PositionSummary, InterviewStep } from '../types/api';
 
-interface PositionSelectorProps {
-  positions: PositionSummary[];
-  selectedPositionId: number | null;
-  onSelectPosition: (positionId: number) => void;
-  loading?: boolean;
+export const getPositions = async (): Promise<PositionSummary[]> => {
+  const response = await axios.get<PositionSummary[]>(
+    'http://localhost:3010/positions'
+  );
+  return response.data;
+};
+
+export const getInterviewStepsByPosition = async (
+  positionId: number
+): Promise<InterviewStep[]> => {
+  const response = await axios.get<{ steps: InterviewStep[] }>(
+    `http://localhost:3010/positions/${positionId}/interview-steps`
+  );
+  return response.data.steps;
+};
+```
+
+```typescript
+// frontend/src/utils/groupCandidatesByStep.ts
+import { CandidateInPipeline, InterviewStep } from '../types/api';
+
+export interface KanbanColumnData {
+  step: InterviewStep;
+  candidates: CandidateInPipeline[];
 }
 
-export const PositionSelector: React.FC<PositionSelectorProps> = ({
-  positions,
-  selectedPositionId,
-  onSelectPosition,
-  loading = false,
-}) => {
-  if (loading) return <Form.Select disabled><option>Cargando posiciones...</option></Form.Select>;
-  if (positions.length === 0) return <Alert variant="warning">No hay posiciones disponibles.</Alert>;
+export const groupCandidatesByStep = (
+  steps: InterviewStep[],
+  candidates: CandidateInPipeline[]
+): KanbanColumnData[] => {
+  return steps.map((step) => ({
+    step,
+    candidates: candidates.filter(
+      (c) => c.currentInterviewStep.id === step.id
+    ),
+  }));
+};
+```
+
+```typescript
+// frontend/src/components/PositionKanbanBoard.tsx
+import React, { useState, useEffect, useMemo } from 'react';
+import { DndContext, DragEndEvent } from '@dnd-kit/core';
+import { Spinner, Alert } from 'react-bootstrap';
+import { KanbanColumn } from './KanbanColumn';
+import { CandidateKanbanCard } from './CandidateKanbanCard';
+import { getInterviewStepsByPosition } from '../services/positionService';
+import { getCandidatesByPosition } from '../services/candidateService';
+import { CandidateInPipeline, InterviewStep } from '../types/api';
+import { groupCandidatesByStep } from '../utils/groupCandidatesByStep';
+
+interface PositionKanbanBoardProps {
+  positionId: number;
+}
+
+export const PositionKanbanBoard: React.FC<PositionKanbanBoardProps> = ({ positionId }) => {
+  const [steps, setSteps] = useState<InterviewStep[]>([]);
+  const [candidates, setCandidates] = useState<CandidateInPipeline[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    const loadBoard = async () => {
+      setLoading(true);
+      setError(null);
+      try {
+        const [stepsData, candidatesData] = await Promise.all([
+          getInterviewStepsByPosition(positionId),
+          getCandidatesByPosition(positionId),
+        ]);
+        setSteps(stepsData);
+        setCandidates(candidatesData.candidates);
+      } catch {
+        setError('Error al cargar el tablero Kanban.');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    loadBoard();
+  }, [positionId]);
+
+  const handleDragEnd = (event: DragEndEvent) => {
+    // Validar no-op, abrir modal de confirmación (FE-005), etc.
+  };
+
+  const columns = useMemo(
+    () => groupCandidatesByStep(steps, candidates),
+    [steps, candidates]
+  );
+
+  if (loading) return <Spinner animation="border" />;
+  if (error) return <Alert variant="danger">{error}</Alert>;
 
   return (
-    <Form.Select
-      value={selectedPositionId ?? ''}
-      onChange={(e) => onSelectPosition(Number(e.target.value))}
-    >
-      {positions.map((pos) => (
-        <option key={pos.id} value={pos.id}>
-          {pos.title} (ID: {pos.id})
-        </option>
-      ))}
-    </Form.Select>
+    <DndContext onDragEnd={handleDragEnd}>
+      <div className="kanban-board">
+        {columns.map((column) => (
+          <KanbanColumn key={column.step.id} column={column} />
+        ))}
+      </div>
+    </DndContext>
   );
 };
 ```
@@ -268,37 +424,61 @@ export const PositionSelector: React.FC<PositionSelectorProps> = ({
 ### Criterios de Aceptación
 
 - [ ] El dashboard incluye un selector de posiciones visible.
-- [ ] El selector muestra todas las posiciones disponibles con `id` y `title`.
-- [ ] Se selecciona la primera posición por defecto si existe al menos una.
-- [ ] Al cambiar la posición, se actualiza el pipeline de candidatos.
-- [ ] Si no hay posiciones, se muestra un mensaje y el selector está deshabilitado.
-- [ ] El selector es accesible (labels, ARIA) y responsive.
+- [ ] Se muestra un tablero Kanban con columnas por etapa del flujo de la posición.
+- [ ] Las columnas se ordenan por `orderIndex` ascendente.
+- [ ] Las tarjetas de candidato se agrupan en la columna de su etapa actual.
+- [ ] Cada tarjeta muestra: nombre, etapa (badge), puntuación, fecha de aplicación, progreso de entrevistas.
+- [ ] Se permite arrastrar y soltar tarjetas entre columnas.
+- [ ] Al soltar en una columna diferente, se abre el modal de confirmación (FE-005).
+- [ ] Al confirmar, se invoca `PUT /candidates/:id/stage` y se refresca el tablero.
+- [ ] Si se suelta en la misma columna, no se realiza petición.
+- [ ] Se muestra spinner/loading durante la carga de datos y actualizaciones.
+- [ ] Se muestran mensajes empty state cuando no hay posiciones, etapas o candidatos en una columna.
+- [ ] Se muestra error claro con botón de reintentar si falla alguna petición.
+- [ ] El tablero es responsive (scroll horizontal en desktop, apilado en móvil).
+- [ ] Las etapas finales (`Hired`, `Rejected`, `On Hold`) se resaltan visualmente en las tarjetas.
 
 ### Tests Requeridos
 
 #### Unit Tests
 
-- Test de renderizado con lista de posiciones.
-- Test de selección por defecto.
-- Test de cambio de selección y llamada a `onSelectPosition`.
-- Test de estado vacío sin posiciones.
-- Test de estado de loading.
+- Test de renderizado del selector de posiciones.
+- Test de selección de primera posición por defecto.
+- Test de renderizado de columnas Kanban agrupadas por etapa.
+- Test de renderizado de tarjetas de candidato con todos los campos.
+- Test de empty state cuando no hay posiciones.
+- Test de empty state cuando una columna no tiene candidatos.
+- Test de error state con botón de reintentar.
+- Test de no-op al soltar tarjeta en la misma columna.
+- Test de llamada a `updateCandidateStage` al soltar en columna diferente.
 
 #### Integration Tests
 
-- Test de carga de posiciones desde el servicio.
-- Test de flujo: cargar posiciones → seleccionar por defecto → mostrar pipeline.
+- Test de flujo completo: cargar posiciones → seleccionar por defecto → cargar etapas y candidatos → renderizar Kanban.
+- Test de drag and drop entre columnas y actualización de etapa.
+- Test de apertura de modal de confirmación tras drag and drop.
+- Test de refresco del tablero tras actualización exitosa.
+- Test de manejo de error 400, 404, 500 en el tablero.
 
 ### Dependencias
 
+- Backend Ticket #001 implementado (`GET /positions/:id/candidates`).
+- Backend Ticket #002 implementado (`PUT /candidates/:id/stage`).
 - Backend Ticket #003 implementado (`GET /positions`).
-- Ticket FE-001 (PositionPipeline) para mostrar resultados.
-- Ticket FE-008 (layout) para integrar el selector en el dashboard.
+- Backend Ticket #004 implementado (`GET /positions/:id/interview-steps`).
+- Ticket FE-001 (PositionPipeline) para el contrato de datos de candidatos; en esta implementación, el pipeline se renderiza como Kanban.
+- Ticket FE-005 (StageConfirmationModal) para confirmar cambios de etapa con notas.
+- Ticket FE-006 (FinalStates) para estilos de etapas finales.
+- Ticket FE-007 (ErrorHandling) para mensajes de error y feedback.
+- Ticket FE-008 (Navegación y Layout) para integrar el tablero en el dashboard.
 
 ### Notas / Riesgos
 
-- Si el Ticket #003 aún no está terminado, se puede desarrollar contra un mock temporal y cambiar la fuente de datos cuando esté listo.
-- Asegurar que el contrato de `PositionSummary` coincida con la respuesta del backend Ticket #003.
+- Si los Backend Tickets #003 o #004 aún no están terminados, se puede desarrollar contra mocks temporales con TODOs claros.
+- La librería de drag and drop debe ser compatible con React 18 y TypeScript; `@dnd-kit` es la recomendación principal.
+- Asegurar que el tablero no haga peticiones duplicadas al montarse.
+- Considerar memoización con `useMemo` para la agrupación de candidatos por etapa.
+- El orden de columnas es ascendente por `orderIndex`; el orden de tarjetas dentro de una columna puede mantener el orden recibido del backend o aplicar un orden adicional (por ejemplo, por fecha de aplicación).
 
 ---
 
@@ -337,8 +517,8 @@ Utiliza `CandidateInPipeline` definido en Ticket FE-001.
 
 #### Archivos a crear/modificar
 
-- `frontend/src/components/CandidatePipelineRow.tsx` (nuevo, para vista de tabla).
-- `frontend/src/components/CandidatePipelineCard.tsx` (nuevo, para vista móvil/tarjeta).
+- `frontend/src/components/CandidateKanbanCard.tsx` (nuevo, tarjeta usada dentro del tablero Kanban de FE-002).
+- `frontend/src/components/CandidatePipelineRow.tsx` (nuevo, vista de tabla alternativa si se requiere).
 - `frontend/src/utils/formatScore.ts` (nuevo) para formatear la puntuación.
 - `frontend/src/utils/getStepBadgeVariant.ts` (nuevo) para asignar variantes de badge.
 - `frontend/src/types/api.ts`.
@@ -416,7 +596,8 @@ export const formatScore = (score: number | null): string => {
 
 ### Dependencias
 
-- Ticket FE-001 (PositionPipeline) para recibir los datos.
+- Ticket FE-001 (PositionPipeline) para el contrato de datos de candidatos.
+- Ticket FE-002 (PositionKanbanBoard) para renderizar las tarjetas dentro del tablero Kanban.
 - React-Bootstrap Icons (opcional para iconos en badges futuros).
 
 ### Notas / Riesgos
@@ -442,7 +623,7 @@ Como reclutador, quiero cambiar la etapa de un candidato directamente desde el p
 
 ### Requisitos Funcionales
 
-1. **Control de cambio de etapa**: cada fila/tarjeta de candidato debe incluir un dropdown o selector de etapas disponibles.
+1. **Control de cambio de etapa**: en el contexto del Kanban (FE-002), el cambio de etapa se realiza principalmente mediante drag and drop de la tarjeta entre columnas. Opcionalmente, cada fila/tarjeta puede incluir un dropdown o selector de etapas disponibles para accesibilidad o vista alternativa.
 2. **Etapas disponibles**: el selector debe mostrar las etapas del `InterviewFlow` asociado a la posición actual. Cada opción debe tener `id`, `name` y `orderIndex`.
 3. **Petición de actualización**: al seleccionar una nueva etapa, invocar `PUT /candidates/:id/stage` con:
    ```json
@@ -560,8 +741,8 @@ interface CandidateStageUpdaterProps {
 
 - Backend Ticket #002 implementado (`PUT /candidates/:id/stage`).
 - Backend Ticket #004 implementado (`GET /positions/:id/interview-steps`).
-- Ticket FE-001 (PositionPipeline) para integrar el control.
-- Ticket FE-003 (CandidatePipelineRow/Card) para incluir el control en cada candidato.
+- Ticket FE-002 (PositionKanbanBoard) para integrar el control de cambio de etapa mediante drag and drop.
+- Ticket FE-003 (CandidateKanbanCard / CandidatePipelineRow) para incluir el control en cada candidato si se usa selector alternativo.
 
 ### Notas / Riesgos
 
@@ -926,15 +1107,15 @@ Como reclutador, quiero que el dashboard de reclutador centralice las acciones d
    - Logo y título actuales.
    - Botón/link para "Añadir Candidato" (existente, ruta `/add-candidate`).
    - Selector de posición (FE-002).
-   - Pipeline de candidatos para la posición seleccionada (FE-001).
+   - Tablero Kanban de candidatos para la posición seleccionada (FE-002), que consume el contrato de datos definido en FE-001.
 2. **Estructura visual**: usar `Container`, `Row`, `Col` y `Card` de React-Bootstrap para organizar las secciones.
-3. **Responsive**: en móvil, las secciones se apilan verticalmente; en escritorio, el selector y pipeline ocupan el ancho completo o se distribuyen en columnas según diseño.
+3. **Responsive**: en móvil, las secciones se apilan verticalmente; en escritorio, el selector y el tablero Kanban ocupan el ancho completo o se distribuyen en columnas según diseño.
 4. **Navegación con React Router**: mantener las rutas existentes:
    - `/` → `RecruiterDashboard`.
    - `/add-candidate` → `AddCandidateForm`.
 5. **Refactor a TypeScript**: convertir `RecruiterDashboard.js` a `RecruiterDashboard.tsx` con tipado estricto, aprovechando la configuración TypeScript del proyecto.
 6. **Mantenimiento de estilo**: conservar y extender los estilos actuales (`App.css`, `index.css`) sin romper el diseño existente.
-7. **Estado global local**: gestionar en `RecruiterDashboard` el estado de `selectedPositionId` y pasarlo a `PositionSelector` y `PositionPipeline`.
+7. **Estado global local**: gestionar en `RecruiterDashboard` el estado de `selectedPositionId` y pasarlo a `PositionSelector` y `PositionKanbanBoard`.
 
 ### Especificación Técnica
 
@@ -953,7 +1134,7 @@ import React, { useState, useEffect } from 'react';
 import { Container, Row, Col, Card, Button } from 'react-bootstrap';
 import { Link } from 'react-router-dom';
 import { PositionSelector } from './PositionSelector';
-import { PositionPipeline } from './PositionPipeline';
+import { PositionKanbanBoard } from './PositionKanbanBoard';
 import { getPositions } from '../services/positionService';
 import { PositionSummary } from '../types/api';
 import logo from '../assets/lti-logo.png';
@@ -1005,7 +1186,7 @@ const RecruiterDashboard: React.FC = () => {
               onSelectPosition={setSelectedPositionId}
               loading={loadingPositions}
             />
-            {selectedPositionId && <PositionPipeline positionId={selectedPositionId} />}
+            {selectedPositionId && <PositionKanbanBoard positionId={selectedPositionId} />}
           </Card>
         </Col>
       </Row>
@@ -1018,7 +1199,7 @@ export default RecruiterDashboard;
 
 ### Criterios de Aceptación
 
-- [ ] El dashboard muestra el logo, título, botón de añadir candidato, selector de posición y pipeline.
+- [ ] El dashboard muestra el logo, título, botón de añadir candidato, selector de posición y tablero Kanban.
 - [ ] El layout es responsive.
 - [ ] La navegación a `/add-candidate` funciona correctamente.
 - [ ] El dashboard se refactoriza a TypeScript (`RecruiterDashboard.tsx`).
@@ -1038,13 +1219,13 @@ export default RecruiterDashboard;
 
 #### Integration Tests
 
-- Test de flujo completo: cargar dashboard → cargar posiciones → seleccionar posición → cargar pipeline.
+- Test de flujo completo: cargar dashboard → cargar posiciones → seleccionar posición → cargar tablero Kanban.
 
 ### Dependencias
 
-- Ticket FE-001 (PositionPipeline).
-- Ticket FE-002 (PositionSelector).
-- Ticket FE-003, FE-004, FE-005, FE-006, FE-007 para los componentes internos del pipeline.
+- Ticket FE-001 (PositionPipeline) para el contrato de datos y servicio de candidatos.
+- Ticket FE-002 (PositionSelector y PositionKanbanBoard) para la visualización y manipulación Kanban.
+- Ticket FE-003, FE-004, FE-005, FE-006, FE-007 para los componentes internos del pipeline (tarjetas, actualización de etapa, modal, estados finales, errores).
 
 ### Notas / Riesgos
 
@@ -1058,10 +1239,10 @@ export default RecruiterDashboard;
 
 ```
 FE-008 (Dashboard Layout)
- ├── FE-001 (PositionPipeline)
- │    ├── FE-002 (PositionSelector)  ← requiere Backend Ticket #003
- │    ├── FE-003 (CandidateCard/Row)
- │    ├── FE-004 (StageUpdater)      ← requiere Backend Ticket #002 + #004
+ ├── FE-002 (PositionSelector + PositionKanbanBoard)  ← requiere Backend Ticket #001 + #003 + #004
+ │    ├── FE-001 (PositionPipeline data contract / service)
+ │    ├── FE-003 (CandidateKanbanCard)
+ │    ├── FE-004 (StageUpdater service / drag-and-drop handler)  ← requiere Backend Ticket #002
  │    │    ├── FE-005 (ConfirmationModal)
  │    │    └── FE-006 (FinalStates)
  │    └── FE-007 (ErrorHandling)
@@ -1069,8 +1250,8 @@ FE-008 (Dashboard Layout)
 
 ## Gaps Técnicos Identificados (ahora cubiertos por tickets backend)
 
-1. **GET /positions** → **Backend Ticket #003** creado. Es necesario para el selector de posiciones (FE-002). Implementación real o mock temporal durante el desarrollo.
-2. **GET /positions/:id/interview-steps** → **Backend Ticket #004** creado. Es necesario para el `CandidateStageUpdater` (FE-004). Implementación real o mock temporal durante el desarrollo.
+1. **GET /positions** → **Backend Ticket #003** creado. Es necesario para el selector de posiciones (FE-002) y el Kanban. Implementación real o mock temporal durante el desarrollo.
+2. **GET /positions/:id/interview-steps** → **Backend Ticket #004** creado. Es necesario para las columnas del Kanban (FE-002) y el `CandidateStageUpdater` (FE-004). Implementación real o mock temporal durante el desarrollo.
 3. **Contrato de errores backend**: se asume que el backend retorna `{ message: string }` en errores. Validar contra la implementación real.
 
 ## Consideraciones Generales de Implementación
@@ -1084,7 +1265,7 @@ FE-008 (Dashboard Layout)
 ## Criterios de Salida del Sprint
 
 - [ ] Todos los tickets FE-001 a FE-008 implementados y probados individualmente.
-- [ ] Flujo completo validado: seleccionar posición → ver pipeline → cambiar etapa → ver feedback.
+- [ ] Flujo completo validado: seleccionar posición → ver tablero Kanban → cambiar etapa por drag and drop → ver feedback.
 - [ ] Tests unitarios ejecutándose con `npm test` sin errores.
 - [ ] Código compilado exitosamente con `npm run build`.
 - [ ] Revisión de código completada y aprobada.

@@ -32,26 +32,34 @@ Como reclutador, quiero visualizar en el dashboard una lista de todos los candid
 
 ---
 
-## US-FE-002: Selector de Posición en el Dashboard
+## US-FE-002: Kanban de Posición en el Dashboard
 
 **User Story:**
-Como reclutador, quiero seleccionar la posición desde un dropdown en el dashboard, para poder consultar el pipeline de candidatos de cada vacante disponible.
+Como reclutador, quiero visualizar y gestionar los candidatos de una posición en un tablero Kanban organizado por etapas del proceso de selección, para mover candidatos entre fases de forma visual e intuitiva y mantener el pipeline actualizado.
 
-**Ticket relacionado:** Ticket #001 - `GET /positions/:id/candidates`
+**Tickets relacionados:** Ticket #001 (`GET /positions/:id/candidates`), Ticket #002 (`PUT /candidates/:id/stage`), Ticket #003 (`GET /positions`), Ticket #004 (`GET /positions/:id/interview-steps`)
 
 ### Criterios de Aceptación
 
 - [ ] El dashboard incluye un selector de posiciones con al menos `positionId` y `positionTitle`.
-- [ ] Al cambiar de posición, se actualiza automáticamente la tabla de candidatos.
+- [ ] Al cambiar de posición, se actualiza automáticamente el tablero Kanban y sus candidatos agrupados por etapa.
 - [ ] La primera posición se puede seleccionar por defecto si existe al menos una.
 - [ ] El selector muestra un mensaje cuando no hay posiciones disponibles.
 - [ ] La posición seleccionada se refleja en el estado de la aplicación (por ejemplo, query param o estado local).
+- [ ] El tablero muestra una columna por cada etapa del flujo de la posición, ordenadas por `orderIndex`.
+- [ ] Cada candidato se representa como una tarjeta dentro de la columna de su etapa actual.
+- [ ] El usuario puede arrastrar y soltar tarjetas entre columnas para cambiar la etapa del candidato.
+- [ ] Al soltar una tarjeta en una columna diferente, se solicita confirmación y se permite agregar notas opcionales antes de actualizar.
+- [ ] Si se suelta una tarjeta en la misma columna, no se realiza ninguna actualización (no-op).
+- [ ] El tablero es responsive: scroll horizontal en escritorio y apilamiento vertical en móvil.
 
 ### Consideraciones Técnicas
 
 - Tipar el selector con `Form.Select` de React-Bootstrap.
 - Centralizar el estado de posición seleccionada en `RecruiterDashboard`.
-- Preparar el mock del listado de posiciones si el endpoint aún no está disponible, manteniendo la interfaz.
+- Usar una librería de drag and drop compatible con React 18, como `@dnd-kit/core` + `@dnd-kit/sortable`.
+- Agrupar candidatos por `currentInterviewStep.id` para formar las columnas del Kanban.
+- Preparar mocks de posiciones, etapas y candidatos si algún endpoint aún no está disponible, manteniendo la interfaz funcional.
 
 ---
 
@@ -199,12 +207,12 @@ Como reclutador, quiero que el dashboard de reclutador centralice las acciones d
 
 ## Notas de Priorización
 
-- **Alta prioridad**: US-FE-001, US-FE-002, US-FE-004, US-FE-008 (habilitan el flujo base del pipeline y la gestión de etapas).
+- **Alta prioridad**: US-FE-001, US-FE-002 (Kanban), US-FE-004, US-FE-008 (habilitan el flujo base del pipeline y la gestión de etapas).
 - **Media prioridad**: US-FE-003, US-FE-007 (mejoran la UX y la claridad del sistema).
 - **Baja prioridad / Futuro**: US-FE-005, US-FE-006 (funcionalidades adicionales de confirmación y estados finales).
 
 ## Dependencias Técnicas
 
-- El frontend depende de que los endpoints `GET /positions/:id/candidates` y `PUT /candidates/:id/stage` estén implementados y funcionando en el backend (puerto 3010).
+- El frontend depende de que los endpoints `GET /positions`, `GET /positions/:id/interview-steps`, `GET /positions/:id/candidates` y `PUT /candidates/:id/stage` estén implementados y funcionando en el backend (puerto 3010).
 - Se recomienda tipar los contratos de API para alinear el frontend (`types/api.ts`) con los contratos de backend.
-- Es conveniente extender `candidateService.ts` con los nuevos métodos `getCandidatesByPosition` y `updateCandidateStage`.
+- Es conveniente extender `candidateService.ts` y `positionService.ts` con los nuevos métodos: `getPositions`, `getInterviewStepsByPosition`, `getCandidatesByPosition` y `updateCandidateStage`.

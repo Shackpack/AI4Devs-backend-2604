@@ -654,3 +654,86 @@ npm --prefix c:/Users/shack/Documents/projects/AI4Devs-backend-2604/backend test
 No inventé ningún comportamiento: el campo `interviewType` del response proviene de `InterviewType.name`, tal como indica el schema y el ticket.
 
 ---
+
+## Registro: 2026-06-27T22:17:00+02:00
+
+**Prompt:**
+@[FRONTEND_TICKETS.md] tevisar el ticket 2, hacer un resumen del mismo
+
+**Respuesta:**
+## Resumen del Ticket FE-002
+
+**Título:** Selector de Posición en el Dashboard — Filtrar pipeline por vacante  
+**Ubicación:** `FRONTEND_TICKETS.md:183-303`
+
+**Objetivo**  
+Permitir al reclutador elegir una posición/vacante desde un dropdown en el dashboard para consultar el pipeline de candidatos asociado.
+
+**Puntos clave**
+
+- **Prioridad:** Alta, Sprint 2, 5 story points.
+- **User Story:** Como reclutador, quiero seleccionar la posición desde un dropdown para consultar el pipeline de cada vacante.
+- **Requisitos funcionales:**
+  - Dropdown en la parte superior del dashboard usando `Form.Select` de React-Bootstrap.
+  - Mostrar `positionId` y `positionTitle` en cada opción.
+  - Seleccionar la primera posición por defecto si hay disponibles.
+  - Al cambiar la selección, actualizar automáticamente el componente `PositionPipeline` (FE-001).
+  - Si no hay posiciones, mostrar mensaje informativo y deshabilitar el selector.
+  - Opcional: reflejar la selección en query params (`?positionId=1`) para futuro.
+- **Contrato de datos:** `PositionSummary { id, title }` proveniente de `GET /positions` (Backend Ticket #003). Se permite mock temporal si el endpoint aún no está listo.
+- **Archivos a crear/modificar:**
+  - `frontend/src/components/PositionSelector.tsx` (nuevo).
+  - `frontend/src/components/RecruiterDashboard.tsx` (integrar selector y estado).
+  - `frontend/src/services/positionService.ts` (nuevo).
+  - `frontend/src/types/api.ts`.
+- **Dependencias:** Backend Ticket #003, FE-001, FE-008.
+- **Tests:** unitarios para renderizado, selección por defecto, cambio de selección, estado vacío y loading; integración para carga de posiciones y flujo completo.
+
+**Riesgo principal:** Si el Backend Ticket #003 no está terminado, se debe desarrollar con mock temporal y dejar un TODO claro para migrar al endpoint real.
+
+---
+
+## Registro: 2026-06-27T22:19:00+02:00
+
+**Prompt:**
+replantear el ticket 2 para que la manipulacion de la lista de candidatos se realice mediante una interfaz tipo kanban
+
+**Respuesta:**
+He replanteado el Ticket FE-002 como un **tablero Kanban** para manipular la lista de candidatos por etapas del proceso de selección.
+
+## Cambios realizados
+
+### `FRONTEND_TICKETS.md`
+
+- **Ticket FE-002** renombrado a **"Kanban de Posición en el Dashboard"**.
+- Nueva user story orientada a visualizar y gestionar candidatos en un tablero Kanban.
+- Requisitos funcionales centrados en:
+  - Selector de posición.
+  - Columnas por etapa del flujo (`orderIndex` ascendente).
+  - Tarjetas de candidato con campos clave.
+  - **Drag and drop** entre columnas para cambiar la etapa del candidato.
+  - Integración con el modal de confirmación (FE-005) y notas opcionales.
+  - No-op si se suelta en la misma columna.
+  - Estados de loading, error y empty state.
+  - Responsive: scroll horizontal en desktop, apilado en móvil.
+- Nuevos contratos de API incluyendo `GET /positions`, `GET /positions/:id/interview-steps`, `GET /positions/:id/candidates` y `PUT /candidates/:id/stage`.
+- Nuevos componentes: `PositionSelector`, `PositionKanbanBoard`, `KanbanColumn`, `CandidateKanbanCard`.
+- Utilidad `groupCandidatesByStep` para agrupar candidatos por etapa.
+- Recomendación de librería: `@dnd-kit/core` + `@dnd-kit/sortable`.
+- Estimación ajustada a **8 story points** (incremento por drag and drop).
+
+### Referencias cruzadas actualizadas
+
+- **FE-001**: ahora se describe como el contrato de datos y servicio que alimenta el Kanban.
+- **FE-003**: la tarjeta de candidato se orienta como `CandidateKanbanCard` para el tablero.
+- **FE-004**: el cambio de etapa se realiza principalmente por drag and drop del Kanban.
+- **FE-008**: el dashboard integra `PositionSelector` y `PositionKanbanBoard`.
+- **Grafo de dependencias**: actualizado para reflejar que FE-002 contiene selector + tablero Kanban.
+- **Criterios de salida del sprint**: flujo validado como *seleccionar posición → ver tablero Kanban → cambiar etapa por drag and drop → ver feedback*.
+
+### `FRONTEND_USER_STORIES.md`
+
+- **US-FE-002** actualizada a **"Kanban de Posición en el Dashboard"** con criterios de aceptación orientados al tablero Kanban y drag and drop.
+- Notas de priorización y dependencias técnicas actualizadas para incluir `GET /positions`, `GET /positions/:id/interview-steps` y los servicios `positionService` / `candidateService`.
+
+---
