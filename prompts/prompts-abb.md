@@ -737,3 +737,49 @@ He replanteado el Ticket FE-002 como un **tablero Kanban** para manipular la lis
 - Notas de priorización y dependencias técnicas actualizadas para incluir `GET /positions`, `GET /positions/:id/interview-steps` y los servicios `positionService` / `candidateService`.
 
 ---
+
+## Registro: 2026-06-27T22:26:00+02:00
+
+**Prompt:**
+toma el rol de Senior frontend typescript developer.
+
+Procede a implementar el ticket numero 1 de @[FRONTEND_TICKETS.md] .
+
+No inventes nada. En caso de duda, preguntarme antes de continuar. Sigue los requisitos y logica especificasdos en el ticket.
+
+**Respuesta:**
+He implementado el Ticket FE-001 (Dashboard de Pipeline por Posición) siguiendo estrictamente los requisitos del ticket.
+
+## Cambios realizados
+
+- **`frontend/src/components/PositionPipeline.tsx`** (nuevo): componente funcional TypeScript con:
+  - Fetching de `GET /positions/:id/candidates` mediante `getCandidatesByPosition`.
+  - Estado loading con `Spinner` de React-Bootstrap.
+  - Estado error con `Alert` y botón "Reintentar" que relanza `fetchPipeline` mediante `useCallback`.
+  - Estado vacío con mensaje "No hay candidatos en proceso para esta posición."
+  - Tabla responsiva con todos los campos requeridos por candidato: `fullName`, `currentInterviewStep.name` (como `Badge`), `averageScore` (formateado con `formatScore`), `applicationDate` (locale `es-ES`), `completedInterviews / totalInterviews` con `ProgressBar`.
+  - Cabecera de card con `positionTitle` e `positionId`.
+  - Orden respetado del array recibido del backend (descendente por `orderIndex`).
+
+- **`frontend/src/components/RecruiterDashboard.tsx`** (nuevo, refactor de `.js` a `.tsx`):
+  - Tipado estricto con `React.FC`.
+  - Mantiene logo, título y botón "Añadir Candidato".
+  - Nueva sección "Pipeline de Posición" con `InputGroup` para introducir el ID de posición (numérico) y botón "Ver pipeline".
+  - Al confirmar el ID, renderiza `<PositionPipeline positionId={...} />` en una fila separada.
+  - Nota: el selector dropdown de posiciones (vía `GET /positions`) se gestiona en Ticket FE-002; en FE-001 se usa un campo numérico simple según indica el ticket en sus Notas/Riesgos.
+
+- **`frontend/src/services/candidateService.ts`**: ya contenía `getCandidatesByPosition`, sin modificaciones necesarias.
+- **`frontend/src/types/api.ts`**: ya contenía todos los tipos necesarios (`CandidateInPipeline`, `PositionPipelineResponse`, `CurrentInterviewStep`), sin modificaciones.
+
+## Criterios de aceptación cubiertos
+
+- ✅ Sección de pipeline integrada en `RecruiterDashboard`.
+- ✅ Petición `GET /positions/:id/candidates` al backend en `http://localhost:3010`.
+- ✅ Campos visibles: `fullName`, `currentInterviewStep.name`, `averageScore`, `applicationDate` (locale es-ES), `completedInterviews/totalInterviews`.
+- ✅ Orden respetado del backend (descendente por `orderIndex`).
+- ✅ Spinner durante carga.
+- ✅ Mensaje vacío cuando `candidates` es `[]`.
+- ✅ Error con botón "Reintentar".
+- ✅ `positionTitle` e `positionId` mostrados en la cabecera del Card.
+
+---
