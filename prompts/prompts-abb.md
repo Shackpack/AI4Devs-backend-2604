@@ -621,3 +621,36 @@ npm --prefix c:/Users/shack/Documents/projects/AI4Devs-backend-2604/backend test
 No inventé ningún comportamiento. Para el filtro de estado activo usé `status: 'Open'` e `isVisible: true` porque así están configuradas las posiciones en el seed (`backend/prisma/seed.ts:31-54`). Si prefieres otro valor o combinación de filtros, dímelo y lo ajusto.
 
 ---
+
+## Registro: 2026-06-27T21:59:00+02:00
+
+**Prompt:**
+toma el rol de Senior backend typescript developer.
+
+Procede a implementar el ticket numero 4 de @[PRODUCT_TICKETS.md].
+
+No inventes nada. En caso de duda, preguntarme antes de continuar. Sigue los requisitos y logica especificasdos en el ticket.
+
+**Respuesta:**
+He implementado el Ticket #004 (`GET /positions/:id/interview-steps`) siguiendo estrictamente los requisitos del ticket.
+
+## Cambios realizados
+
+- **Servicio** - `backend/src/application/services/positionService.ts:70-120`: añadida `getInterviewStepsByPosition(positionId)` que consulta la posición con su `interviewFlow` y `interviewSteps`, incluyendo `interviewType`. Retorna `positionId`, `positionTitle`, `interviewFlowId` y `steps` ordenados por `orderIndex` ascendente.
+- **Controlador** - `backend/src/presentation/controllers/positionController.ts:36-54`: añadido `getInterviewStepsByPositionController` con validación de ID numérico (400), posición no encontrada (404) y errores internos (500).
+- **Ruta** - `backend/src/routes/positionRoutes.ts:10`: añadido `router.get('/:id/interview-steps', getInterviewStepsByPositionController)`.
+- **Tests** - `backend/src/tests/positionController.test.ts:193-299`: añadidos 5 tests para el nuevo endpoint.
+- **API Spec** - `backend/api-spec.yaml:50-100`: documentado el endpoint.
+- **Ticket tracking** - `PRODUCT_TICKETS.md:415`: marcado el Ticket #004 como `✅ Implementado` y todos los criterios de aceptación como completados.
+
+## Verificación
+
+```bash
+npm --prefix c:/Users/shack/Documents/projects/AI4Devs-backend-2604/backend test -- --silent
+```
+
+**Resultado:** `Test Suites: 2 passed, 2 total` | `Tests: 24 passed, 24 total`.
+
+No inventé ningún comportamiento: el campo `interviewType` del response proviene de `InterviewType.name`, tal como indica el schema y el ticket.
+
+---

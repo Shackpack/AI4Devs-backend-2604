@@ -1,10 +1,11 @@
 import { Request, Response } from 'express';
-import { getCandidatesByPositionController, getPositionsController } from '../presentation/controllers/positionController';
+import { getCandidatesByPositionController, getInterviewStepsByPositionController, getPositionsController } from '../presentation/controllers/positionController';
 import * as positionService from '../application/services/positionService';
 
 jest.mock('../application/services/positionService', () => ({
     getCandidatesByPosition: jest.fn(),
     getPositions: jest.fn(),
+    getInterviewStepsByPosition: jest.fn(),
 }));
 
 describe('GET /positions/:id/candidates', () => {
@@ -180,6 +181,114 @@ describe('GET /positions', () => {
         (positionService.getPositions as jest.Mock).mockRejectedValue(new Error('Database connection failed'));
 
         await getPositionsController(mockRequest as Request, mockResponse as Response);
+
+        expect(statusMock).toHaveBeenCalledWith(500);
+        expect(jsonMock).toHaveBeenCalledWith({
+            error: 'Internal Server Error',
+            message: 'Database connection failed',
+        });
+    });
+});
+
+describe('GET /positions/:id/interview-steps', () => {
+    let mockRequest: Partial<Request>;
+    let mockResponse: Partial<Response>;
+    let jsonMock: jest.Mock;
+    let statusMock: jest.Mock;
+
+    beforeEach(() => {
+        jsonMock = jest.fn();
+        statusMock = jest.fn().mockReturnValue({ json: jsonMock });
+        mockResponse = {
+            status: statusMock,
+            json: jsonMock,
+        };
+        jest.clearAllMocks();
+    });
+
+    it('should return 400 if position ID is not numeric', async () => {
+        mockRequest = {
+            params: { id: 'abc' },
+        };
+
+        await getInterviewStepsByPositionController(mockRequest as Request, mockResponse as Response);
+
+        expect(statusMock).toHaveBeenCalledWith(400);
+        expect(jsonMock).toHaveBeenCalledWith({ error: 'Invalid position ID format' });
+    });
+
+    it('should return 404 if position is not found', async () => {
+        mockRequest = {
+            params: { id: '999' },
+        };
+
+        (positionService.getInterviewStepsByPosition as jest.Mock).mockRejectedValue(new Error('Position not found'));
+
+        await getInterviewStepsByPositionController(mockRequest as Request, mockResponse as Response);
+
+        expect(statusMock).toHaveBeenCalledWith(404);
+        expect(jsonMock).toHaveBeenCalledWith({ error: 'Position not found' });
+    });
+
+    it('should return interview steps ordered by orderIndex for a valid position', async () => {
+        mockRequest = {
+            params: { id: '1' },
+        };
+
+        const mockResult = {
+            positionId: 1,
+            positionTitle: 'Software Engineer',
+            interviewFlowId: 1,
+            steps: [
+                {
+                    id: 1,
+                    name: 'Initial Screening',
+                    orderIndex: 1,
+                    interviewType: 'HR Interview',
+                },
+                {
+                    id: 2,
+                    name: 'Technical Interview',
+                    orderIndex: 2,
+                    interviewType: 'Technical Interview',
+                },
+            ],
+        };
+
+        (positionService.getInterviewStepsByPosition as jest.Mock).mockResolvedValue(mockResult);
+
+        await getInterviewStepsByPositionController(mockRequest as Request, mockResponse as Response);
+
+        expect(jsonMock).toHaveBeenCalledWith(mockResult);
+    });
+
+    it('should return empty steps array if position has no interview steps', async () => {
+        mockRequest = {
+            params: { id: '2' },
+        };
+
+        const mockResult = {
+            positionId: 2,
+            positionTitle: 'Data Scientist',
+            interviewFlowId: 2,
+            steps: [],
+        };
+
+        (positionService.getInterviewStepsByPosition as jest.Mock).mockResolvedValue(mockResult);
+
+        await getInterviewStepsByPositionController(mockRequest as Request, mockResponse as Response);
+
+        expect(jsonMock).toHaveBeenCalledWith(mockResult);
+    });
+
+    it('should return 500 on unexpected error', async () => {
+        mockRequest = {
+            params: { id: '1' },
+        };
+
+        (positionService.getInterviewStepsByPosition as jest.Mock).mockRejectedValue(new Error('Database connection failed'));
+
+        await getInterviewStepsByPositionController(mockRequest as Request, mockResponse as Response);
 
         expect(statusMock).toHaveBeenCalledWith(500);
         expect(jsonMock).toHaveBeenCalledWith({

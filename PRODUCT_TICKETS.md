@@ -412,7 +412,7 @@ router.get('/', getPositionsController);
 **Sprint**: Sprint 2  
 **Product Owner**: Especificado por usuario  
 **Fecha**: 2026-06-27  
-**Estado**: ⏳ Pendiente
+**Estado**: ✅ Implementado
 
 ### User Story
 
@@ -535,14 +535,14 @@ router.get('/:id/interview-steps', getInterviewStepsByPositionController);
 
 ### Criterios de Aceptación
 
-- [ ] El endpoint retorna las etapas del flujo de entrevistas asociado a la posición.
-- [ ] Incluir `positionId`, `positionTitle`, `interviewFlowId` y array `steps` ordenado.
-- [ ] Cada etapa incluye `id`, `name`, `orderIndex` e `interviewType`.
-- [ ] Manejar caso de posición no encontrada (404).
-- [ ] Manejar caso de `positionId` no numérico (400).
-- [ ] Manejar errores internos con status 500.
-- [ ] Documentar el endpoint en `api-spec.yaml`.
-- [ ] Las etapas se ordenan por `orderIndex` ascendente.
+- [x] El endpoint retorna las etapas del flujo de entrevistas asociado a la posición.
+- [x] Incluir `positionId`, `positionTitle`, `interviewFlowId` y array `steps` ordenado.
+- [x] Cada etapa incluye `id`, `name`, `orderIndex` e `interviewType`.
+- [x] Manejar caso de posición no encontrada (404).
+- [x] Manejar caso de `positionId` no numérico (400).
+- [x] Manejar errores internos con status 500.
+- [x] Documentar el endpoint en `api-spec.yaml`.
+- [x] Las etapas se ordenan por `orderIndex` ascendente.
 
 ### Tests Requeridos
 

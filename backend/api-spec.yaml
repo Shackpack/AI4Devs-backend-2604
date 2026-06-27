@@ -47,6 +47,57 @@ paths:
                       nullable: true
         '500':
           description: Internal server error
+  /positions/{id}/interview-steps:
+    get:
+      summary: List interview steps for a position
+      description: Returns the ordered interview steps for the interview flow associated with a specific position.
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: integer
+          description: ID of the position
+      responses:
+        '200':
+          description: Interview steps retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  positionId:
+                    type: integer
+                    description: ID of the position
+                  positionTitle:
+                    type: string
+                    description: Title of the position
+                  interviewFlowId:
+                    type: integer
+                    description: ID of the interview flow
+                  steps:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        id:
+                          type: integer
+                          description: ID of the interview step
+                        name:
+                          type: string
+                          description: Name of the interview step
+                        orderIndex:
+                          type: integer
+                          description: Order of the step within the flow
+                        interviewType:
+                          type: string
+                          description: Name of the interview type
+        '400':
+          description: Invalid position ID format
+        '404':
+          description: Position not found
+        '500':
+          description: Internal server error
   /candidates:
     post:
       summary: Add a new candidate

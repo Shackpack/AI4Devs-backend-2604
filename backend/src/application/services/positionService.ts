@@ -67,6 +67,58 @@ export const getPositions = async (): Promise<PositionSummary[]> => {
     }));
 };
 
+interface InterviewStepDetail {
+    id: number;
+    name: string;
+    orderIndex: number;
+    interviewType: string;
+}
+
+interface PositionInterviewStepsResult {
+    positionId: number;
+    positionTitle: string;
+    interviewFlowId: number;
+    steps: InterviewStepDetail[];
+}
+
+export const getInterviewStepsByPosition = async (positionId: number): Promise<PositionInterviewStepsResult> => {
+    const position = await prisma.position.findUnique({
+        where: { id: positionId },
+        include: {
+            interviewFlow: {
+                include: {
+                    interviewSteps: {
+                        include: {
+                            interviewType: true
+                        },
+                        orderBy: {
+                            orderIndex: 'asc'
+                        }
+                    }
+                }
+            }
+        }
+    });
+
+    if (!position) {
+        throw new Error('Position not found');
+    }
+
+    const steps: InterviewStepDetail[] = position.interviewFlow.interviewSteps.map((step: any) => ({
+        id: step.id,
+        name: step.name,
+        orderIndex: step.orderIndex,
+        interviewType: step.interviewType.name
+    }));
+
+    return {
+        positionId: position.id,
+        positionTitle: position.title,
+        interviewFlowId: position.interviewFlowId,
+        steps
+    };
+};
+
 export const getCandidatesByPosition = async (positionId: number): Promise<PositionCandidatesResult> => {
     const position = await prisma.position.findUnique({
         where: { id: positionId }
