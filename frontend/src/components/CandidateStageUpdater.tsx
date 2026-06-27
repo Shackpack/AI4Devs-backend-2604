@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Form, Spinner } from 'react-bootstrap';
 import { updateCandidateStage } from '../services/candidateService';
 import { InterviewStep } from '../types/api';
+import { getErrorMessage } from '../utils/errorHandler';
 import { StageConfirmationModal } from './StageConfirmationModal';
 
 interface CandidateStageUpdaterProps {
@@ -24,6 +25,7 @@ export const CandidateStageUpdater: React.FC<CandidateStageUpdaterProps> = ({
   const [loading, setLoading] = useState<boolean>(false);
   const [pendingStepId, setPendingStepId] = useState<number | null>(null);
   const [showModal, setShowModal] = useState<boolean>(false);
+  const [modalError, setModalError] = useState<string | null>(null);
 
   const currentStep = availableSteps.find((s) => s.id === currentStepId) ?? null;
   const newStep = availableSteps.find((s) => s.id === pendingStepId) ?? null;
@@ -39,6 +41,7 @@ export const CandidateStageUpdater: React.FC<CandidateStageUpdaterProps> = ({
     if (pendingStepId === null) return;
 
     setLoading(true);
+    setModalError(null);
     try {
       await updateCandidateStage(candidateId, {
         positionId,
@@ -49,8 +52,8 @@ export const CandidateStageUpdater: React.FC<CandidateStageUpdaterProps> = ({
       setPendingStepId(null);
       onUpdated();
     } catch (err) {
-      const message =
-        err instanceof Error ? err.message : 'Error al actualizar la etapa del candidato.';
+      const message = getErrorMessage(err);
+      setModalError(message);
       onError(message);
     } finally {
       setLoading(false);
@@ -60,6 +63,7 @@ export const CandidateStageUpdater: React.FC<CandidateStageUpdaterProps> = ({
   const handleCancel = () => {
     setShowModal(false);
     setPendingStepId(null);
+    setModalError(null);
   };
 
   return (
@@ -89,6 +93,7 @@ export const CandidateStageUpdater: React.FC<CandidateStageUpdaterProps> = ({
           previousStepName={currentStep.name}
           newStepName={newStep.name}
           loading={loading}
+          errorMessage={modalError}
           onConfirm={handleConfirm}
           onCancel={handleCancel}
         />

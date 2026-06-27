@@ -10,9 +10,11 @@ import { Alert, Button, Spinner } from 'react-bootstrap';
 import { getCandidatesByPosition, updateCandidateStage } from '../services/candidateService';
 import { getInterviewStepsByPosition } from '../services/positionService';
 import { CandidateInPipeline, InterviewStep } from '../types/api';
+import { getErrorMessage } from '../utils/errorHandler';
 import { groupCandidatesByStep } from '../utils/groupCandidatesByStep';
 import { KanbanColumn } from './KanbanColumn';
 import { StageConfirmationModal } from './StageConfirmationModal';
+import { ToastNotification } from './ToastNotification';
 
 interface PositionKanbanBoardProps {
   positionId: number;
@@ -36,6 +38,7 @@ export const PositionKanbanBoard: React.FC<PositionKanbanBoardProps> = ({ positi
   const [updatingApplicationId, setUpdatingApplicationId] = useState<number | null>(null);
   const [pendingMove, setPendingMove] = useState<PendingMove | null>(null);
   const [modalLoading, setModalLoading] = useState<boolean>(false);
+  const [modalError, setModalError] = useState<string | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
 
   const sensors = useSensors(useSensor(PointerSensor));
@@ -50,8 +53,8 @@ export const PositionKanbanBoard: React.FC<PositionKanbanBoardProps> = ({ positi
       ]);
       setSteps(stepsData);
       setCandidates(candidatesData.candidates);
-    } catch {
-      setError('Error al cargar el tablero Kanban.');
+    } catch (err) {
+      setError(getErrorMessage(err));
     } finally {
       setLoading(false);
     }
@@ -101,6 +104,7 @@ export const PositionKanbanBoard: React.FC<PositionKanbanBoardProps> = ({ positi
     if (!pendingMove) return;
 
     setModalLoading(true);
+    setModalError(null);
     setUpdatingApplicationId(pendingMove.applicationId);
 
     try {
@@ -113,13 +117,11 @@ export const PositionKanbanBoard: React.FC<PositionKanbanBoardProps> = ({ positi
       setSuccessMessage(
         `${pendingMove.fullName} movido/a a "${pendingMove.newStepName}" correctamente.`
       );
-      setTimeout(() => setSuccessMessage(null), 4000);
 
       setPendingMove(null);
       await loadBoard();
-    } catch {
-      setError('Error al actualizar la etapa del candidato.');
-      setPendingMove(null);
+    } catch (err) {
+      setModalError(getErrorMessage(err));
     } finally {
       setModalLoading(false);
       setUpdatingApplicationId(null);
@@ -128,6 +130,7 @@ export const PositionKanbanBoard: React.FC<PositionKanbanBoardProps> = ({ positi
 
   const handleCancelMove = () => {
     setPendingMove(null);
+    setModalError(null);
   };
 
   if (loading) {
@@ -160,9 +163,12 @@ export const PositionKanbanBoard: React.FC<PositionKanbanBoardProps> = ({ positi
   return (
     <>
       {successMessage && (
-        <Alert variant="success" dismissible onClose={() => setSuccessMessage(null)}>
-          {successMessage}
-        </Alert>
+        <ToastNotification
+          message={successMessage}
+          variant="success"
+          autoDismiss
+          onClose={() => setSuccessMessage(null)}
+        />
       )}
 
       <DndContext sensors={sensors} onDragEnd={handleDragEnd}>
@@ -188,6 +194,7 @@ export const PositionKanbanBoard: React.FC<PositionKanbanBoardProps> = ({ positi
           previousStepName={pendingMove.currentStepName}
           newStepName={pendingMove.newStepName}
           loading={modalLoading}
+          errorMessage={modalError}
           onConfirm={handleConfirmMove}
           onCancel={handleCancelMove}
         />

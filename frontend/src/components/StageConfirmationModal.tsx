@@ -8,6 +8,7 @@ interface StageConfirmationModalProps {
   previousStepName: string;
   newStepName: string;
   loading?: boolean;
+  errorMessage?: string | null;
   onConfirm: (notes: string) => void;
   onCancel: () => void;
 }
@@ -20,6 +21,7 @@ export const StageConfirmationModal: React.FC<StageConfirmationModalProps> = ({
   previousStepName,
   newStepName,
   loading = false,
+  errorMessage,
   onConfirm,
   onCancel,
 }) => {
@@ -46,6 +48,11 @@ export const StageConfirmationModal: React.FC<StageConfirmationModalProps> = ({
         <p className="mb-3">
           De <strong>{previousStepName}</strong> a <strong>{newStepName}</strong>
         </p>
+        {errorMessage && (
+          <Alert variant="danger" className="mb-3">
+            {errorMessage}
+          </Alert>
+        )}
         {movingToFinalStep && (
           <Alert variant="warning" className="mb-3">
             <strong>Atención:</strong> estás moviendo al candidato a una etapa final (

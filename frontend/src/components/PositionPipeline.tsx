@@ -2,6 +2,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { Alert, Button, Card, Col, Row, Spinner, Table } from 'react-bootstrap';
 import { getCandidatesByPosition } from '../services/candidateService';
 import { PositionPipelineResponse } from '../types/api';
+import { getErrorMessage } from '../utils/errorHandler';
 import { CandidatePipelineRow } from './CandidatePipelineRow';
 
 interface PositionPipelineProps {
@@ -20,7 +21,7 @@ export const PositionPipeline: React.FC<PositionPipelineProps> = ({ positionId }
       const data = await getCandidatesByPosition(positionId);
       setPipeline(data);
     } catch (err) {
-      setError('Error al cargar el pipeline de candidatos.');
+      setError(getErrorMessage(err));
     } finally {
       setLoading(false);
     }

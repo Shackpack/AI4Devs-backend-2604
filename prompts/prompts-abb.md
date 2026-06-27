@@ -966,3 +966,42 @@ He implementado el Ticket FE-006 (Estados Especiales de Candidato — Hired, Rej
 - ✅ Lista centralizada en `FINAL_STEP_NAMES` — un único punto de cambio para futuros estados.
 
 ---
+
+## Registro: 2026-06-27T23:27:00+02:00
+
+**Prompt:**
+toma el rol de Senior frontend typescript developer.
+
+Procede a implementar el ticket numero 7 de @FRONTEND_TICKETS.md .
+
+No inventes nada. En caso de duda, preguntarme antes de continuar. Sigue los requisitos y logica especificasdos en el ticket.
+
+**Respuesta:**
+He implementado el Ticket FE-007 (Manejo de Errores y Feedback al Usuario).
+
+## Archivos creados
+
+- **`frontend/src/utils/errorHandler.ts`** (nuevo): `getErrorMessage(error: unknown): string` usando `axios.isAxiosError`. Mapeo: sin respuesta → mensaje de red, 400 → "Datos inválidos", 404 → "Candidato o posición no encontrados.", 500 → "Error interno del servidor.", otros → "Error inesperado (status)". Exactamente según el spec del ticket.
+
+- **`frontend/src/components/ToastNotification.tsx`** (nuevo): `Alert` dismissible con prop `autoDismiss` que activa un `setTimeout` de 5000ms (constante `SUCCESS_AUTODISMISS_MS`). Props: `message`, `variant`, `onClose`, `autoDismiss?`.
+
+## Archivos modificados
+
+- **`frontend/src/components/StageConfirmationModal.tsx`**: añadida prop `errorMessage?: string | null`. Si está presente, renderiza `Alert variant="danger"` dentro del body **antes** de la advertencia de etapa final. El modal permanece abierto al producirse un error (no se cierra automáticamente).
+
+- **`frontend/src/components/PositionKanbanBoard.tsx`**: importa `getErrorMessage` y `ToastNotification`. Errores de carga usan `getErrorMessage(err)`. Errores de actualización se almacenan en `modalError` y se pasan a `StageConfirmationModal` (modal no se cierra en error). Mensaje de éxito usa `ToastNotification` con `autoDismiss` (5 segundos). `setModalError(null)` al cancelar.
+
+- **`frontend/src/components/PositionPipeline.tsx`**: importa `getErrorMessage` y lo usa en el catch de `fetchPipeline` en lugar del string hardcodeado.
+
+- **`frontend/src/components/CandidateStageUpdater.tsx`**: importa `getErrorMessage`. Estado `modalError` pasado a `StageConfirmationModal`. En error, llama tanto a `setModalError` (muestra en modal) como a `onError` (propaga al padre). `setModalError(null)` al cancelar.
+
+## Criterios de aceptación cubiertos
+
+- ✅ Error de carga: `Alert` danger con botón "Reintentar" y mensaje traducido via `getErrorMessage`.
+- ✅ Error de actualización: se muestra dentro del modal sin cerrarlo.
+- ✅ Mapeo de errores HTTP (400/404/500/red) a mensajes en español.
+- ✅ Mensaje de éxito temporal con `ToastNotification` (`autoDismiss`, 5 segundos).
+- ✅ Botones y selectores deshabilitados durante `loading` (ya implementado en tickets anteriores).
+- ✅ Errores persisten hasta que el usuario cierre o reintente; éxitos se autodescarten a 5s.
+
+---
