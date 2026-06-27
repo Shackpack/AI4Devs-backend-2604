@@ -870,3 +870,45 @@ He implementado el Ticket FE-003 (Tarjeta de Candidato con Detalle del Proceso).
 - ✅ `formatScore` centralizado en util compartido, sin duplicación.
 
 ---
+
+## Registro: 2026-06-27T23:17:00+02:00
+
+**Prompt:**
+toma el rol de Senior frontend typescript developer.
+
+Procede a implementar el ticket numero 4 de @[FRONTEND_TICKETS.md] .
+
+No inventes nada. En caso de duda, preguntarme antes de continuar. Sigue los requisitos y logica especificasdos en el ticket.
+
+**Respuesta:**
+He implementado el Ticket FE-004 (Actualizar Etapa de Candidato desde el Pipeline).
+
+## Archivos creados/modificados
+
+- **`frontend/src/components/CandidateStageUpdater.tsx`** (nuevo): componente con `Form.Select` que muestra todas las etapas disponibles del flow. Implementa:
+  - No-op si la etapa seleccionada es igual a la actual (`currentStepId`).
+  - Al seleccionar una etapa diferente, abre `StageConfirmationModal` (FE-005, ya implementado) con etapa anterior y nueva.
+  - Al confirmar, llama `updateCandidateStage(candidateId, { positionId, newInterviewStepId, notes })`.
+  - `Form.Select` deshabilitado durante la petición (`loading`). Spinner visible junto al selector.
+  - `onUpdated()` llamado tras éxito; `onError(message)` llamado tras fallo.
+  - Props exactas del spec: `candidateId`, `positionId`, `currentStepId`, `availableSteps`, `onUpdated`, `onError`.
+
+- **`frontend/src/components/CandidatePipelineRow.tsx`** (modificado): añadidas props opcionales `positionId?`, `availableSteps?`, `onStageUpdated?`, `onStageError?`. Cuando todas están presentes, renderiza `CandidateStageUpdater` en la celda de etapa en lugar del `Badge` estático, habilitando el control inline para la vista de tabla.
+
+## Archivos sin cambios (ya completos)
+
+- `frontend/src/services/candidateService.ts` — `updateCandidateStage` ya existía.
+- `frontend/src/types/api.ts` — `UpdateCandidateStageRequest`, `UpdateCandidateStageResponse`, `InterviewStep` ya existían.
+
+## Criterios de aceptación cubiertos
+
+- ✅ Control de cambio de etapa en cada candidato (`CandidateStageUpdater`).
+- ✅ Muestra etapas disponibles del flow via prop `availableSteps`.
+- ✅ Invoca `PUT /candidates/:id/stage` al cambiar la etapa.
+- ✅ No-op si la etapa seleccionada es la misma.
+- ✅ Control deshabilitado durante la carga + spinner visible.
+- ✅ Llama `onUpdated` tras éxito (refresco del pipeline delegado al padre).
+- ✅ Llama `onError(message)` tras fallo con mensaje extraído del error.
+- ✅ Campo `notes` soportado vía `StageConfirmationModal` (FE-005).
+
+---

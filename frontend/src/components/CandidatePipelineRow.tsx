@@ -1,22 +1,38 @@
 import React from 'react';
 import { Badge, ProgressBar } from 'react-bootstrap';
-import { CandidateInPipeline } from '../types/api';
+import { CandidateInPipeline, InterviewStep } from '../types/api';
 import { formatScore } from '../utils/formatScore';
 import { getStepBadgeVariant } from '../utils/getStepBadgeVariant';
+import { CandidateStageUpdater } from './CandidateStageUpdater';
 
 interface CandidatePipelineRowProps {
   candidate: CandidateInPipeline;
   onClick?: (candidate: CandidateInPipeline) => void;
+  positionId?: number;
+  availableSteps?: InterviewStep[];
+  onStageUpdated?: () => void;
+  onStageError?: (message: string) => void;
 }
 
 export const CandidatePipelineRow: React.FC<CandidatePipelineRowProps> = ({
   candidate,
   onClick,
+  positionId,
+  availableSteps,
+  onStageUpdated,
+  onStageError,
 }) => {
   const progress =
     candidate.totalInterviews === 0
       ? 0
       : (candidate.completedInterviews / candidate.totalInterviews) * 100;
+
+  const showStageUpdater =
+    positionId !== undefined &&
+    availableSteps !== undefined &&
+    availableSteps.length > 0 &&
+    onStageUpdated !== undefined &&
+    onStageError !== undefined;
 
   return (
     <tr
@@ -25,9 +41,20 @@ export const CandidatePipelineRow: React.FC<CandidatePipelineRowProps> = ({
     >
       <td>{candidate.fullName}</td>
       <td>
-        <Badge bg={getStepBadgeVariant(candidate.currentInterviewStep.name)}>
-          {candidate.currentInterviewStep.name}
-        </Badge>
+        {showStageUpdater ? (
+          <CandidateStageUpdater
+            candidateId={candidate.candidateId}
+            positionId={positionId!}
+            currentStepId={candidate.currentInterviewStep.id}
+            availableSteps={availableSteps!}
+            onUpdated={onStageUpdated!}
+            onError={onStageError!}
+          />
+        ) : (
+          <Badge bg={getStepBadgeVariant(candidate.currentInterviewStep.name)}>
+            {candidate.currentInterviewStep.name}
+          </Badge>
+        )}
       </td>
       <td>{formatScore(candidate.averageScore)}</td>
       <td>{new Date(candidate.applicationDate).toLocaleString('es-ES')}</td>
