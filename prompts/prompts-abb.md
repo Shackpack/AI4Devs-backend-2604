@@ -480,3 +480,109 @@ npm test        # ✅ 16 tests passed (5 de position + 11 de candidate)
 El endpoint `PUT /candidates/:id/stage` está implementado y testeado correctamente.
 
 ---
+
+## Registro: 2026-06-27T21:17:00+02:00
+
+**Prompt:**
+tomar el rol de senior front-end typescript developer y product owner. 
+tomando en cuenta los tickets de trabajo realizados en @[PRODUCT_TICKETS.md] 
+crear las user stories asociadas a estos tickets para front-end.
+
+**Respuesta:**
+He creado las user stories de front-end asociadas a los tickets del `PRODUCT_TICKETS.md`.
+
+## Resumen
+
+Generé el archivo `FRONTEND_USER_STORIES.md` con **8 user stories** de front-end, organizadas por prioridad y vinculadas a cada ticket backend:
+
+| ID | User Story | Ticket relacionado |
+|---|---|---|
+| **US-FE-001** | Dashboard de pipeline por posición | #001 |
+| **US-FE-002** | Selector de posición en el dashboard | #001 |
+| **US-FE-003** | Tarjeta de candidato con detalle del proceso | #001 |
+| **US-FE-004** | Actualizar etapa de candidato desde el pipeline | #002 |
+| **US-FE-005** | Modal de confirmación y notas al cambiar etapa | #002 |
+| **US-FE-006** | Estados especiales (Hired, Rejected, On Hold) | #002 |
+| **US-FE-007** | Manejo de errores y feedback al usuario | #001 y #002 |
+| **US-FE-008** | Navegación y layout del dashboard de reclutador | #001 y #002 |
+
+Cada historia incluye:
+- User story en formato **Como… quiero… para…**
+- Criterios de aceptación con checkboxes
+- Consideraciones técnicas para React + TypeScript + React-Bootstrap
+- Referencias a los componentes existentes como `RecruiterDashboard` y `candidateService`
+
+El archivo está en `@/c:/Users/shack/Documents/projects/AI4Devs-backend-2604/FRONTEND_USER_STORIES.md:1-273`.
+
+---
+
+## Registro: 2026-06-27T21:24:00+02:00
+
+**Prompt:**
+procede a crear los tickets de trabajo a partir de @[FRONTEND_USER_STORIES.md]
+
+Se exhaustivo con la especificación de los tickets de trabajo. Comprueba que no te dejas nada sin especificar en los tickets de trabajo.
+
+**Respuesta:**
+He creado los tickets de trabajo frontend exhaustivos en `@/c:/Users/shack/Documents/projects/AI4Devs-backend-2604/FRONTEND_TICKETS.md:1-273`.
+
+## Resumen
+
+Generé **8 tickets frontend** (FE-001 a FE-008), uno por cada user story de `FRONTEND_USER_STORIES.md`, con especificación completa:
+
+| Ticket | Título | Prioridad | Story |
+|---|---|---|---|
+| **FE-001** | Dashboard de Pipeline por Posición | Alta | US-FE-001 |
+| **FE-002** | Selector de Posición en el Dashboard | Alta | US-FE-002 |
+| **FE-003** | Tarjeta de Candidato con Detalle | Media | US-FE-003 |
+| **FE-004** | Actualizar Etapa de Candidato | Alta | US-FE-004 |
+| **FE-005** | Modal de Confirmación y Notas | Media | US-FE-005 |
+| **FE-006** | Estados Especiales (Hired/Rejected/On Hold) | Media | US-FE-006 |
+| **FE-007** | Manejo de Errores y Feedback | Media | US-FE-007 |
+| **FE-008** | Navegación y Layout del Dashboard | Alta | US-FE-008 |
+
+Cada ticket incluye:
+- User story y requisitos funcionales
+- Contrato de API con interfaces TypeScript
+- Especificación técnica, archivos a crear/modificar y código de ejemplo
+- Criterios de aceptación con checkboxes
+- Tests unitarios e integración
+- Dependencias y riesgos
+
+## Gaps técnicos identificados
+
+En el proceso de especificación detecté dos **faltantes del backend** que dejé documentados explícitamente en los tickets:
+
+1. **`GET /positions`** — necesario para el selector de posiciones (FE-002).
+2. **`GET /positions/:id/interview-steps`** — necesario para obtener las etapas disponibles del flow (FE-004).
+
+También registré el prompt anterior y su respuesta en `@/c:/Users/shack/Documents/projects/AI4Devs-backend-2604/prompts/prompts-abb.md:519-538` como solicitaste.
+
+---
+
+## Registro: 2026-06-27T21:35:00+02:00
+
+**Prompt:**
+tomando los gap tecnicos identificados, necesitan intervencion para ser funcionales? seria necesario añadirlos como nuevos tickets de backend para la consistencia general de la aplicacion?
+
+**Respuesta:**
+Sí, los gaps técnicos sí requieren intervención backend para que el frontend sea completamente funcional. Sin esos endpoints, el selector de posiciones y el selector de etapas no tendrían datos reales, lo que rompería la funcionalidad del dashboard.
+
+He añadido ambos como nuevos tickets backend para mantener la consistencia de la aplicación:
+
+| Ticket | Endpoint | Propósito | Frontend dependiente |
+|---|---|---|---|
+| **Backend #003** | `GET /positions` | Listar posiciones activas | FE-002 (Selector de Posición) |
+| **Backend #004** | `GET /positions/:id/interview-steps` | Listar etapas del flujo de una posición | FE-004 (Actualizar Etapa) |
+
+### Cambios realizados
+
+- Añadidos los tickets #003 y #004 en `PRODUCT_TICKETS.md` con user story, requisitos, query Prisma, controlador, ruta, tests y criterios de aceptación.
+- Actualizadas las Notas de Implementación en `PRODUCT_TICKETS.md` para reflejar las nuevas dependencias entre frontend y backend.
+- Actualizados los tickets frontend en `FRONTEND_TICKETS.md` para referenciar los nuevos backend tickets #003 y #004 en lugar de dejarlos como gaps sin resolver.
+
+### Recomendación
+
+Esos dos tickets deberían entrar en el mismo Sprint 2 que el frontend, ya que son bloqueantes para FE-002 y FE-004. Hasta que estén implementados, el frontend puede desarrollarse con mocks temporales para no parar el avance, dejando claro el TODO de migración a los endpoints reales.
+
+---
