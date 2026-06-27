@@ -48,6 +48,7 @@ export const CandidatePipelineRow: React.FC<CandidatePipelineRowProps> = ({
         {showStageUpdater ? (
           <CandidateStageUpdater
             candidateId={candidate.candidateId}
+            candidateName={candidate.fullName}
             positionId={positionId!}
             currentStepId={candidate.currentInterviewStep.id}
             availableSteps={availableSteps!}

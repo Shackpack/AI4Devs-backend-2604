@@ -7,6 +7,7 @@ import { StageConfirmationModal } from './StageConfirmationModal';
 
 interface CandidateStageUpdaterProps {
   candidateId: number;
+  candidateName: string;
   positionId: number;
   currentStepId: number;
   availableSteps: InterviewStep[];
@@ -16,6 +17,7 @@ interface CandidateStageUpdaterProps {
 
 export const CandidateStageUpdater: React.FC<CandidateStageUpdaterProps> = ({
   candidateId,
+  candidateName,
   positionId,
   currentStepId,
   availableSteps,
@@ -89,7 +91,7 @@ export const CandidateStageUpdater: React.FC<CandidateStageUpdaterProps> = ({
       {showModal && currentStep && newStep && (
         <StageConfirmationModal
           show={showModal}
-          candidateName=""
+          candidateName={candidateName}
           previousStepName={currentStep.name}
           newStepName={newStep.name}
           loading={loading}

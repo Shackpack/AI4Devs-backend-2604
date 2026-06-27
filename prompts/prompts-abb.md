@@ -1040,3 +1040,65 @@ He implementado el Ticket FE-008 (Navegación y Layout del Dashboard de Reclutad
 - ✅ Estilos y navegación existentes conservados.
 
 ---
+
+## Registro: 2026-06-27T23:46:00+02:00
+
+**Prompt:**
+@[prompts/prompts-abb.md] buscar inconsistencias dentro del archivo con el proyecto actual. No des nada por sentado y comprueba con evidencias los hallazgos que encuentres
+
+**Respuesta:**
+He revisado el archivo `prompts/prompts-abb.md` contra el proyecto actual leyendo código y ejecutando tests/build. Hallazgos verificados con evidencia:
+
+1. **Configuración de base de datos incoherente**: `.env` apunta a `172.22.60.83` mientras `schema.prisma` está hardcodeado a `localhost:5432`.
+2. **Swagger no expuesto**: existen dependencias y `api-spec.yaml`, pero `backend/src/index.ts` no monta `/api-docs`.
+3. **Estructura de backend descrita incorrectamente**: `README.md` menciona `backend/src/infrastructure/` que no existe.
+4. **Duplicación `App.js`/`App.tsx`**: `App.js` contiene la app real y `App.tsx` es el componente por defecto de CRA sin usar.
+5. **`CandidateStageUpdater` no pasa el nombre del candidato al modal**: invoca `StageConfirmationModal` con `candidateName=""`.
+6. **`README.md` desactualizado**: ubicación de `.env`, credenciales de ejemplo y mención de `infrastructure/` incorrectos.
+7. **Endpoint `PUT /candidates/:id/stage` no documentado en `api-spec.yaml`**.
+8. **Frontend: `jest.config.js` inexistente** aunque `package.json` apunta a él.
+
+Verificación: backend tests 24/24 passed; frontend build exitoso.
+
+---
+
+## Registro: 2026-06-27T23:55:00+02:00
+
+**Prompt:**
+resolver inconsistencia 5 y 7
+
+**Respuesta:**
+Resueltas las inconsistencias 5 y 7:
+
+- **Inconsistencia 5**: Añadida prop `candidateName` a `CandidateStageUpdater`; `CandidatePipelineRow` pasa `candidate.fullName`; el modal ya no recibe cadena vacía.
+- **Inconsistencia 7**: Añadida documentación OpenAPI para `PUT /candidates/{id}/stage` en `backend/api-spec.yaml` con request body, responses 200/400/404/500 y schema de `previousStep`/`currentStep`.
+
+Verificación: frontend build ✅ exitoso.
+
+---
+
+## Registro: 2026-06-27T23:57:00+02:00
+
+**Prompt:**
+corregir inconsistencia 4
+
+**Respuesta:**
+Corregida la inconsistencia 4:
+
+- Eliminado `frontend/src/App.js`.
+- `frontend/src/App.tsx` reemplazado por el contenido funcional de `App.js` (rutas a `RecruiterDashboard` y `AddCandidateForm`), ahora tipado en TypeScript.
+
+Verificación: solo queda `App.tsx`; frontend build ✅ exitoso.
+
+---
+
+## Registro: 2026-06-27T23:58:00+02:00
+
+**Prompt:**
+eliminalo tambien
+
+**Respuesta:**
+Eliminado `frontend/src/App.css` (quedaba sin usar tras la migración a `App.tsx`). Frontend build sigue siendo ✅ exitoso.
+
+---
+
