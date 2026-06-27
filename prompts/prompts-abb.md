@@ -1005,3 +1005,38 @@ He implementado el Ticket FE-007 (Manejo de Errores y Feedback al Usuario).
 - ✅ Errores persisten hasta que el usuario cierre o reintente; éxitos se autodescarten a 5s.
 
 ---
+
+## Registro: 2026-06-27T23:31:00+02:00
+
+**Prompt:**
+toma el rol de Senior frontend typescript developer.
+
+Procede a implementar el ticket numero 8 de @FRONTEND_TICKETS.md .
+
+No inventes nada. En caso de duda, preguntarme antes de continuar. Sigue los requisitos y logica especificasdos en el ticket.
+
+**Respuesta:**
+He implementado el Ticket FE-008 (Navegación y Layout del Dashboard de Reclutador).
+
+## Archivos modificados
+
+- **`frontend/src/components/PositionSelector.tsx`** (refactor): eliminada la lógica de fetching interno. Ahora es un componente completamente controlado con props: `positions: PositionSummary[]`, `selectedPositionId: number | null`, `onSelectPosition: (id: number) => void`, `loading: boolean`. Sin `useEffect`, sin llamadas a `getPositions`. Estados loading/vacío siguen manejados internamente via props.
+
+- **`frontend/src/components/RecruiterDashboard.tsx`** (refactor completo a FE-008 spec): gestiona `positions`, `selectedPositionId` y `loadingPositions` como estado local. `useEffect` lanza `getPositions()` al montar y setea la primera posición por defecto. Pasa `positions`, `selectedPositionId`, `onSelectPosition` y `loading` a `PositionSelector`. Renderiza `PositionKanbanBoard` dentro del mismo `Card` cuando hay posición seleccionada. Layout con `Container`, `Row`, `Col`, `Card` de React-Bootstrap.
+
+## Archivos eliminados
+
+- **`frontend/src/components/RecruiterDashboard.js`**: eliminado tras completar la migración a `RecruiterDashboard.tsx`. `App.js` importa sin extensión por lo que resolverá `.tsx` automáticamente.
+
+## Criterios de aceptación cubiertos
+
+- ✅ Dashboard muestra logo, título, botón "Añadir Candidato", selector de posición y tablero Kanban.
+- ✅ Layout responsive con Bootstrap grid (`Row`, `Col`, `Container`).
+- ✅ Navegación a `/add-candidate` funciona (ruta existente en `App.js`).
+- ✅ Dashboard en TypeScript (`RecruiterDashboard.tsx`) con tipado estricto.
+- ✅ `RecruiterDashboard.js` eliminado.
+- ✅ `selectedPositionId` gestionado en el dashboard y propagado a componentes hijos.
+- ✅ Primera posición seleccionada automáticamente al cargar.
+- ✅ Estilos y navegación existentes conservados.
+
+---
